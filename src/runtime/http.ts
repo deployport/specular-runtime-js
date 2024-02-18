@@ -68,7 +68,6 @@ export async function StreamMultipartMixedChunks(httpResponse: any, callback: St
             // slice off the \r\n\r\n at the beginning of the body and the \n-- at the end
             const body = message.slice(i + partHeaderBodySeparator.length, message.length - 1);
 
-            // console.log("body", body.length, body)
             if (body) {
                 const part: Part = {
                     headers,
@@ -120,7 +119,6 @@ export class HTTPRequest {
                 h.push([key, val]);
             }
         }
-        console.log("h", h);
         const hh = new Headers(h);
         const response = await fetch(this.url, {
             method: this.method,

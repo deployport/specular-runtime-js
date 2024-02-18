@@ -94,7 +94,6 @@ export default class Client {
         if (config.requestConfigurators) {
             this.requestConfigurators.push(...config.requestConfigurators);
         }
-        // console.log("Hello World from runtime/main.mjs v2 from native typescript");
     }
 
     private async configureRequest(sub: Submission) {
@@ -104,11 +103,9 @@ export default class Client {
     }
 
     async postOperation(operation: Operation, inputProps: GenericProperties, abortController: AbortController): Promise<Response> {
-        // operation.resource.package.
         const uri = this.endpoint + "/" + operation.resource.packageUniqueName + "/" + operation.name;
         const content = await operation.input.serialize(inputProps);
         const body = JSON.stringify(content);
-        // console.log("operation input body", body);
 
         const req = new HTTPRequest();
         req.method = "POST";
@@ -147,7 +144,6 @@ export default class Client {
             return result.struct;
         }
         if (result.error) {
-            // console.warn("error", result.error);
             throw newHttpErrorException(result.error);
         }
         if (result.heartbeat) {
@@ -170,7 +166,6 @@ export default class Client {
         const partCallback = async (chunk: Part): Promise<void> => {
             const result = await parseHTTPResult(operation.resource.package, chunk.headers['content-type'], async () => JSON.parse(chunk.body));
             if (result.heartbeat) {
-                // console.log("heartbeat received, ignoring");
                 return;
             }
             if (result.error) {

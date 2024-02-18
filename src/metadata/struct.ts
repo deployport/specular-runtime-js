@@ -65,15 +65,12 @@ export default class Struct implements UserDefinedType {
     }
     deserialize(content: Content): GenericProperties {
         const struct: any = this.instantiate!(content)!;
-        console.log("deserialize struct", struct, "from content", content);
-        // this.base?.deserializeStruct(struct, content);
         this.deserializeStruct(struct, content);
         return struct;
     }
     private deserializeStruct(struct: SerializedProperties, content: Content) {
         for (const prop of this.properties) {
             const value = content.getProperty(prop.name);
-            console.log("deserializing", this.name, "prop", prop, "value", value);
             if (value === undefined) {
                 continue;
             }
