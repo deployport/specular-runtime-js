@@ -1,6 +1,6 @@
 {
   "name": "@deployport/specular-runtime",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Runtime for Specular API clients with support for Node.js and Browser",
   "keywords": [
     "specular",
@@ -21,14 +21,14 @@
   },
   "devDependencies": {
     "@tsconfig/node18": "^18.2.2",
-    "@types/node": "^20.8.3",
     "@typescript-eslint/eslint-plugin": "^7.0.1",
     "@typescript-eslint/parser": "^7.0.1",
     "eslint": "^8.56.0",
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "response-iterator": "^0.2.6"
+    "response-iterator": "^0.2.6",
+    "@types/node": "^20.8.3"
   },
   "repository": {
     "type": "git",
