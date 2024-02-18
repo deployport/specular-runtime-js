@@ -1,8 +1,8 @@
 import Operation from "../metadata/operation.js";
 import Package from "../metadata/package.js";
-import Content, { CreateContentFromObject, Properties } from "./content.js";
+import { Properties } from "./content.js";
 import { HTTPRequest, Part, StreamMultipartMixedChunks } from "./http.js";
-import { GenericProperties, Struct, StructInterface } from "./struct.js";
+import { GenericProperties } from "./struct.js";
 
 interface httpError {
     readonly message: string
@@ -189,8 +189,6 @@ export default class Client {
         };
         try {
             await StreamMultipartMixedChunks(res, partCallback);
-        } catch (err) {
-            throw err;
         } finally {
             // make sure we abort the request when done
             abortController.abort();

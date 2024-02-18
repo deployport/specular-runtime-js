@@ -16,11 +16,15 @@
   "scripts": {
     "build": "tsc",
     "prepare": "npm run build",
-    "clean": "rm -rf lib"
+    "clean": "rm -rf lib",
+    "lint": "eslint . --ext .ts"
   },
   "devDependencies": {
     "@tsconfig/node18": "^18.2.2",
     "@types/node": "^20.8.3",
+    "@typescript-eslint/eslint-plugin": "^7.0.1",
+    "@typescript-eslint/parser": "^7.0.1",
+    "eslint": "^8.56.0",
     "typescript": "^5.2.2"
   },
   "dependencies": {

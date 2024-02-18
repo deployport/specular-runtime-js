@@ -27,7 +27,7 @@ export async function StreamMultipartMixedChunks(httpResponse: any, callback: St
         ? contentType
             ?.substring(contentType?.indexOf(delimiter) + delimiter.length)
             .replace(/['"]/g, "")
-            .replace(/\;(.*)/gm, "")
+            .replace(/;(.*)/gm, "")
             .trim()
         : "-";
     const boundary = `\r\n--${boundaryVal}`;
