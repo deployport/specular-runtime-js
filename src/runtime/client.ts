@@ -61,20 +61,14 @@ export type ClientConfig = {
 /**
  * Returns a copy of original with any overrides applied. If overrides is null, the original is returned.
  * @param a is the original configuration
- * @param more is the configuration to add more to the original. For scalar properties it overrides the original. For array properties it appends to the original., for array properties it appends over the original.
+ * @param more is the configuration to add more to the original.
  * @returns 
  */
 export function MergeClientConfig(a?: ClientConfig, more?: ClientConfig): ClientConfig {
-    const config = {
+    return {
         ...a,
-    }
-    if (more?.endpoint) {
-        config.endpoint = more.endpoint
-    }
-    if (more?.requestConfigurators) {
-        config.requestConfigurators = [...(config.requestConfigurators || []), ...more.requestConfigurators]
-    }
-    return config;
+        ...more,
+    };
 }
 
 /**
