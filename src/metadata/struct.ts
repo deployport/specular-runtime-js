@@ -74,7 +74,12 @@ export default class Struct implements UserDefinedType {
             if (value === undefined) {
                 continue;
             }
-            struct[prop.name] = deserializeFromJSON(prop.type, value);
+            try {
+                const propVal = deserializeFromJSON(prop.type, value);
+                struct[prop.name] = propVal;
+            } catch (e) {
+                throw new Error(`failed to deserialize property '${prop.name}': ${e}`);
+            }
         }
     }
 }
@@ -121,7 +126,13 @@ function deserializeFromJSON(typeRef: TypeRef, value: any): any {
             }
             break;
         case "userDefined":
+            if (typeRef.NonNullable && (value == null || value == undefined)) {
+                throw new Error(`expected non-nullable value, got ${value}`);
+            }
             if (typeRef.Type instanceof Struct) {
+                if (value === null) {
+                    return null;
+                }
                 return typeRef.Type.package.requireBuildFromJSON(value);
             } else if (typeRef.Type instanceof Enum) {
                 // TODO: validate enum value

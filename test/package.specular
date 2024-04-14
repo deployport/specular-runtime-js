@@ -1,0 +1,18 @@
+library package SpecularJS/TestPackage
+
+struct Body {
+    contentLength: int32!
+}
+
+struct Response {
+    body: Body
+}
+
+resource TestHTTP {
+    operation Get {
+        input struct {}
+        output struct {
+            response: Response
+        }
+    }
+}

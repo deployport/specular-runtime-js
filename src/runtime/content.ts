@@ -1,6 +1,9 @@
 export type Properties = Record<string, any>;
 
 export function CreateContentFromObject(obj: any): Content | null {
+    if (obj == null) {
+        return null;
+    }
     const fqtn = obj['__type'];
     if (fqtn == null) {
         return null;

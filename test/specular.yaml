@@ -1,0 +1,9 @@
+packages:
+  - origin: "file://package.specular"
+    generate:
+      - language: js
+        client:
+          output: ./generated-client
+          options:
+            _skipJS: true
+            specularRuntimeImport: "../../lib/index.js"
