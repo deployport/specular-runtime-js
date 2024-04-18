@@ -11,10 +11,22 @@ export default class Package {
     public readonly path: string;
     private readonly resources: Resource[] = [];
     private readonly types: UserDefinedType[] = [];
+
     public annotations: any[] = [];
+
+    /**
+     * allPackages is a list of all packages including this and all imported
+     */
+    private allPackages: Package[] = [];
+    private structsByFQTN: Map<string, Struct> = new Map();
 
     constructor(path: string) {
         this.path = path;
+        this.allPackages.push(this);
+    }
+
+    _importPackage(pkg: Package) {
+        this.allPackages.push(pkg);
     }
 
     _addAnnotation<T>(annotation: T, config?: (annotation: T) => void) {
@@ -54,18 +66,27 @@ export default class Package {
             throw new Error(`duplicate type name ${tp.name}`);
         }
         this.types.push(tp);
-    }
-    get structs(): Struct[] {
-        return this.types.filter(struct => struct instanceof Struct) as Struct[];
-    }
-    structByFQTN(fqtn: string): Struct | null {
-        return this.structs.find(struct => struct.fqtn === fqtn) || null;
-    }
-    buildByFQTN(fqtn: string, content: Content): GenericProperties | null {
-        const structMeta = this.structByFQTN(fqtn);
-        if (structMeta == null) {
-            return null;
+        if (tp instanceof Struct) {
+            this.structsByFQTN.set(tp.fqtn, tp);
         }
+    }
+    /**
+     * Returns the Struct with the given FQTN, otherwise throws an error @TypeNotFoundError
+     * @param fqtn 
+     * @returns 
+     */
+    structByFQTN(fqtn: string): Struct {
+        for (const pkg of this.allPackages) {
+            const struct = pkg.structsByFQTN.get(fqtn);
+            if (struct) {
+                return struct;
+            }
+        }
+        throw new TypeNotFoundError(fqtn);
+    }
+
+    buildByFQTN(fqtn: string, content: Content): GenericProperties {
+        const structMeta = this.structByFQTN(fqtn);
         const struct = structMeta.deserialize(content)
         return struct;
     }
@@ -86,6 +107,7 @@ export default class Package {
         }
         return st;
     }
+
     requireBuildArrayNullableItems(contentArray: (Content | null)[]): (GenericProperties | null)[] {
         const stArray: (GenericProperties | null)[] = [];
         for (const content of contentArray) {
@@ -109,5 +131,11 @@ export default class Package {
             stArray.push(st);
         }
         return stArray;
+    }
+}
+
+export class TypeNotFoundError extends Error {
+    constructor(typeName: string) {
+        super(`failed to find type ${typeName}`);
     }
 }
