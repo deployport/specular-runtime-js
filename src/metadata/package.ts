@@ -25,7 +25,7 @@ export default class Package {
         this.allPackages.push(this);
     }
 
-    _importPackage(pkg: Package) {
+    importPackage(pkg: Package) {
         this.allPackages.push(pkg);
     }
 

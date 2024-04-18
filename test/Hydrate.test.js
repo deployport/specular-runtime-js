@@ -21,7 +21,7 @@ test('Hydrate', (t) => {
 const importingPkg = new Metadata.Package(
     'SpecularJS/Importing',
 );
-importingPkg._importPackage(_pkg);
+importingPkg.importPackage(_pkg);
 
 export const ImportingDoc = new Metadata.Struct(
     importingPkg, 
