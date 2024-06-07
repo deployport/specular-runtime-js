@@ -4,6 +4,10 @@ import Struct from "./struct.js";
 import UserDefinedType from "./userDefinedType.js";
 import { GenericProperties } from "../runtime/struct.js";
 
+function normalizeMapEntry(key: string): string {
+    return key.toLowerCase();
+}
+
 /**
  * Package
  */
@@ -42,7 +46,8 @@ export default class Package {
      * @returns 
      */
     resourceByName(name: string): Resource | null {
-        return this.resources.find(resource => resource.name === name) || null;
+        name = normalizeMapEntry(name)
+        return this.resources.find(resource => normalizeMapEntry(resource.name) === name) || null;
     }
 
     _addResource(resource: Resource) {
@@ -52,7 +57,8 @@ export default class Package {
         this.resources.push(resource);
     }
     typeByName(name: string): UserDefinedType | null {
-        return this.types.find(struct => struct.name === name) || null;
+        name = normalizeMapEntry(name);
+        return this.types.find(struct => normalizeMapEntry(struct.name) === name) || null;
     }
     requireTypeByName(name: string): UserDefinedType {
         const st = this.typeByName(name);
@@ -67,7 +73,7 @@ export default class Package {
         }
         this.types.push(tp);
         if (tp instanceof Struct) {
-            this.structsByFQTN.set(tp.fqtn, tp);
+            this.structsByFQTN.set(normalizeMapEntry(tp.fqtn), tp);
         }
     }
     /**
@@ -76,6 +82,7 @@ export default class Package {
      * @returns 
      */
     structByFQTN(fqtn: string): Struct {
+        // fqtn = normalizeMapEntry(fqtn);
         for (const pkg of this.allPackages) {
             const struct = pkg.structsByFQTN.get(fqtn);
             if (struct) {

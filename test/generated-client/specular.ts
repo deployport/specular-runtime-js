@@ -5,7 +5,7 @@ import {
 } from '../../lib/index.js';
 
 const _pkg = new Metadata.Package(
-    'SpecularJS/TestPackage',
+    'specularjs/testpackage',
 );
 
 export const BodyMeta = new Metadata.Struct(
@@ -21,9 +21,9 @@ Builtin: "int32"
 export interface BodyProperties
  {
     // /**
-    // * Returns "SpecularJS/TestPackage:Body"
+    // * Returns "specularjs/testpackage:Body"
     // */
-    // fqtn: "SpecularJS/TestPackage:Body";
+    // fqtn: "specularjs/testpackage:Body";
     contentLength : number;
 };
 export interface Body extends BodyProperties, Runtime.StructInterface{};
@@ -40,9 +40,9 @@ Type: SpecularPackage().requireTypeByName("Body")
 export interface ResponseProperties
  {
     // /**
-    // * Returns "SpecularJS/TestPackage:Response"
+    // * Returns "specularjs/testpackage:Response"
     // */
-    // fqtn: "SpecularJS/TestPackage:Response";
+    // fqtn: "specularjs/testpackage:Response";
     body : BodyProperties| null;
 };
 export interface Response extends ResponseProperties, Runtime.StructInterface{};
@@ -54,9 +54,9 @@ export const TestHTTPGetInputMeta = new Metadata.Struct(
 export interface TestHTTPGetInputProperties
  {
     // /**
-    // * Returns "SpecularJS/TestPackage:TestHTTPGetInput"
+    // * Returns "specularjs/testpackage:TestHTTPGetInput"
     // */
-    // fqtn: "SpecularJS/TestPackage:TestHTTPGetInput";
+    // fqtn: "specularjs/testpackage:TestHTTPGetInput";
 };
 export interface TestHTTPGetInput extends TestHTTPGetInputProperties, Runtime.StructInterface{};
 export const TestHTTPGetOutputMeta = new Metadata.Struct(
@@ -72,9 +72,9 @@ Type: SpecularPackage().requireTypeByName("Response")
 export interface TestHTTPGetOutputProperties
  {
     // /**
-    // * Returns "SpecularJS/TestPackage:TestHTTPGetOutput"
+    // * Returns "specularjs/testpackage:TestHTTPGetOutput"
     // */
-    // fqtn: "SpecularJS/TestPackage:TestHTTPGetOutput";
+    // fqtn: "specularjs/testpackage:TestHTTPGetOutput";
     response : ResponseProperties| null;
 };
 export interface TestHTTPGetOutput extends TestHTTPGetOutputProperties, Runtime.StructInterface{};

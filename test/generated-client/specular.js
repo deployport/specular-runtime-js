@@ -1,6 +1,6 @@
 // JS gen package
 import { Metadata, } from '../../lib/index.js';
-const _pkg = new Metadata.Package('SpecularJS/TestPackage');
+const _pkg = new Metadata.Package('specularjs/testpackage');
 export const BodyMeta = new Metadata.Struct(_pkg, "Body");
 new Metadata.Property(BodyMeta, "contentLength", {
     NonNullable: true,

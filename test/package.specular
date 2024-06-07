@@ -1,4 +1,4 @@
-library package SpecularJS/TestPackage
+library package specularjs/testpackage
 
 struct Body {
     contentLength: int32!
