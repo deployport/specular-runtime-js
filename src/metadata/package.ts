@@ -82,7 +82,7 @@ export default class Package {
      * @returns 
      */
     structByFQTN(fqtn: string): Struct {
-        // fqtn = normalizeMapEntry(fqtn);
+        fqtn = normalizeMapEntry(fqtn);
         for (const pkg of this.allPackages) {
             const struct = pkg.structsByFQTN.get(fqtn);
             if (struct) {

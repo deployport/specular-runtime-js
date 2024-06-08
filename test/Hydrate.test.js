@@ -48,3 +48,13 @@ test('imported instantiation', (t) => {
     t.equal(s.body, null);
     t.end();
 });
+
+test('unmatched case instantiation', (t) => {
+    const obj = {
+        __type: "SpeculARJS/testPackage:Response",
+        "body": null
+    };
+    const s = importingPkg.requireBuildFromJSON(obj);
+    t.equal(s.body, null);
+    t.end();
+});

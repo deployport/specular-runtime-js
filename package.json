@@ -1,6 +1,6 @@
 {
   "name": "@deployport/specular-runtime",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Runtime for Specular API clients with support for Node.js and Browser",
   "keywords": [
     "specular",
