@@ -1,4 +1,5 @@
 import Package from "../metadata/package.js";
+import { StructPath } from "../metadata/struct.js";
 import Content from "./content.js";
 
 /**
@@ -13,39 +14,14 @@ export class HydrateContext {
     }
 }
 
+type ExplicitRecord<K extends keyof any, T> = {
+    [P in K]: { value: T }
+};
+
 export interface StructInterface {
-    __type: string;
+    __structPath: StructPath;
 }
 
-export type GenericProperties = Record<string, any>;
-export type SerializedProperties = Record<string, any>;
-
-export interface Struct {
-    readonly fqtn: string;
-    dehydrate(content: Content): Promise<void>;
-    hydrate(context: HydrateContext): void;
-    toContent(): Promise<Content>
-}
-
-export async function StructToContent(st: Struct | null): Promise<Content | null> {
-    if (!st) {
-        return null;
-    }
-    return await st.toContent();
-}
-
-export async function StructsToContent(structs: (Struct | null)[] | null): Promise<(Content | null)[] | null> {
-    if (!structs) {
-        return null;
-    }
-
-    const contents: (Content | null)[] = [];
-    for (const struct of structs) {
-        if (!struct) {
-            contents.push(null);
-            continue;
-        }
-        contents.push(await struct.toContent());
-    }
-    return contents;
-}
+export type GenericProperties = ExplicitRecord<string, any>;
+export type SerializedProperties = ExplicitRecord<string, any>;
+export type Struct = GenericProperties & StructInterface;

@@ -1,27 +1,17 @@
+import { BuiltinMeta } from "../metadata/builtin.js";
 import Operation from "../metadata/operation.js";
 import Package from "../metadata/package.js";
 import { StructPath } from "../metadata/struct.js";
 import { Properties } from "./content.js";
 import { HTTPRequest, Part, StreamMultipartMixedChunks } from "./http.js";
-import { GenericProperties } from "./struct.js";
+import { GenericProperties, Struct } from "./struct.js";
 
-interface httpError {
-    readonly message: string
-    resource: string
-    operation: string
-    // HTTPStatusCode int`json:"-"`
-    code: string
-}
+const builtinMeta = BuiltinMeta();
 
-function newHttpErrorException(err: httpError): Error {
+function newHttpErrorException(err: Struct): Error {
     return new Error(err.message + " " + err.code);
 }
 
-interface httpResult {
-    struct?: GenericProperties
-    error?: httpError
-    heartbeat?: boolean
-}
 const contentTypeFormat = "+json"
 
 const cleanHTTPContentTypeFormat = (contentType: string): string => {
@@ -32,14 +22,14 @@ const cleanHTTPContentTypeFormat = (contentType: string): string => {
     return contentType.substring(0, idx);
 }
 
-async function parseHTTPResult(pkg: Package, contentType: string, parseBody: () => Promise<any>): Promise<httpResult> {
+async function parseHTTPResult(pkg: Package, contentType: string, parseBody: () => Promise<any>): Promise<Struct> {
     const outputJSON = await parseBody() as Properties;
     const mediaType = StructPath.fromString(cleanHTTPContentTypeFormat(contentType));
     const responseStruct = pkg.requireBuildFromJSON(mediaType, outputJSON);
     if (responseStruct instanceof Error) {
         throw responseStruct;
     }
-    return { struct: responseStruct };
+    return responseStruct;
     // // TODO: handle other content types
     // if (contentType === "specular/error") {
     //     const err = await parseBody() as httpError;
@@ -143,17 +133,14 @@ export default class Client {
             throw new Error("invalid response, missing content type");
         }
         const result = await parseHTTPResult(operation.resource.package, contentType, async () => await res.json());
-
-        if (result.struct) {
-            return result.struct;
-        }
-        if (result.error) {
-            throw newHttpErrorException(result.error);
-        }
-        if (result.heartbeat) {
+        if (builtinMeta.HeartbeatMeta.path === result.__structPath) {
             throw new Error("unexpected heartbeat");
+        } else if (builtinMeta.ErrMeta.path === result.__structPath) {
+            throw newHttpErrorException(result);
+        } else if (result instanceof Error) {
+            throw result;
         }
-        throw new Error("unexpected result");
+        return result;
     }
 
     /**
@@ -170,27 +157,17 @@ export default class Client {
         const partCallback = async (chunk: Part): Promise<void> => {
             const result = await parseHTTPResult(
                 operation.resource.package,
-                chunk.headers['content-type'],
+                chunk.headers['content-type'] || '',
                 async () => JSON.parse(chunk.body),
             );
-            if (result.heartbeat) {
+            if (builtinMeta.HeartbeatMeta.path === result.__structPath) {
                 return;
+            } else if (builtinMeta.ErrMeta.path === result.__structPath) {
+                throw newHttpErrorException(result);
+            } else if (result instanceof Error) {
+                throw result;
             }
-            if (result.error) {
-                throw newHttpErrorException(result.error);
-            }
-            if (result.struct) {
-                await outputCallback(result.struct);
-                return;
-            }
-
-            // const outputJSON = JSON.parse(chunk.body) as Properties;
-            // const responseStruct = operation.resource.package.requireBuildFromJSON(outputJSON);
-            // if (responseStruct instanceof Error) {
-            //     throw responseStruct;
-            // }
-
-            throw new Error("unexpected result");
+            await outputCallback(result);
         };
         try {
             await StreamMultipartMixedChunks(res, partCallback);

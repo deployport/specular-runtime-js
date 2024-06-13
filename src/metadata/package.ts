@@ -2,7 +2,7 @@ import Content, { CreateContentFromObject } from "../runtime/content.js";
 import Resource from "./resource.js";
 import Struct, { StructPath } from "./struct.js";
 import UserDefinedType from "./userDefinedType.js";
-import { GenericProperties } from "../runtime/struct.js";
+import { GenericProperties, Struct as RuntimeStruct } from "../runtime/struct.js";
 
 export function normalizeMapEntry(key: string): string {
     return key.toLowerCase();
@@ -120,13 +120,16 @@ export default class Package {
         throw new TypeNotFoundError(structPath.mediaType);
     }
 
-    buildByFQTN(structPath: StructPath, content: Content): GenericProperties {
+    buildByFQTN(structPath: StructPath, content: Content): RuntimeStruct {
         const structMeta = this.structByFQTN(structPath);
-        const struct = structMeta.deserialize(content)
+        const struct: RuntimeStruct = {
+            ...structMeta.deserialize(content),
+            __structPath: structPath,
+        };
         return struct;
     }
 
-    requireBuildFromJSON(structPath: StructPath, structJSON: Record<string, any> | object | any): GenericProperties {
+    requireBuildFromJSON(structPath: StructPath, structJSON: Record<string, any> | object | any): RuntimeStruct {
         const responseContent = CreateContentFromObject(structJSON);
         if (!responseContent) {
             throw new Error("failed to create content from malformed JSON");
@@ -134,7 +137,7 @@ export default class Package {
         return this.requireBuildByFQTN(structPath, responseContent);
     }
 
-    requireBuildByFQTN(structPath: StructPath, content: Content): GenericProperties {
+    requireBuildByFQTN(structPath: StructPath, content: Content): RuntimeStruct {
         const st = this.buildByFQTN(structPath, content);
         if (!st) {
             throw new Error(`failed to build struct ${structPath}`);
