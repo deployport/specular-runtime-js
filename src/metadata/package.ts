@@ -4,7 +4,7 @@ import Struct, { StructPath } from "./struct.js";
 import UserDefinedType from "./userDefinedType.js";
 import { GenericProperties } from "../runtime/struct.js";
 
-function normalizeMapEntry(key: string): string {
+export function normalizeMapEntry(key: string): string {
     return key.toLowerCase();
 }
 
@@ -23,8 +23,8 @@ export class PackagePath {
      */
     readonly mediaTypeSubType: string;
     constructor(namespace: string, name: string) {
-        this.namespace = namespace;
-        this.name = name;
+        this.namespace = normalizeMapEntry(namespace);
+        this.name = normalizeMapEntry(name);
         this.mediaTypeSubType = `${moduleSuperType}.${this.namespace}.${this.name}`;
     }
 

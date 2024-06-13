@@ -1,5 +1,5 @@
 import Content from "../runtime/content.js";
-import Package, { PackagePath, mediaTypeSeparator, moduleSuperType } from "./package.js";
+import Package, { PackagePath, mediaTypeSeparator, moduleSuperType, normalizeMapEntry } from "./package.js";
 import { GenericProperties, SerializedProperties } from "../runtime/struct.js";
 import Property from "./property.js";
 import UserDefinedType from "./userDefinedType.js";
@@ -13,7 +13,7 @@ export class StructPath {
     readonly mediaType: string;
     constructor(module: PackagePath, name: string) {
         this.module = module;
-        this.name = name;
+        this.name = normalizeMapEntry(name);
         this.mediaType = `${module.mediaTypeSubType}.${name}`;
     }
     toString() {
@@ -22,7 +22,7 @@ export class StructPath {
 
     // parses a content type like application/spec.<namespace>.<module>
     static fromString(str: string): StructPath {
-        const parentMediaTypeIndex = str.indexOf(moduleSuperType);
+        const parentMediaTypeIndex = normalizeMapEntry(str).indexOf(moduleSuperType);
         if (parentMediaTypeIndex === -1) {
             throw new Error(`invalid package path ${str}`);
         }

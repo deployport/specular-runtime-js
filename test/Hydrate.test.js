@@ -24,17 +24,9 @@ test('Hydrate', (t) => {
     t.end();
 });
 
-test('HydrateNotCase', (t) => {
-    const obj = {
-        "body": null
-    };
-    const s = _pkg.requireBuildFromJSON(ResponseMeta.path.toString().toUpper(), obj);
-    t.equal(s.body, null);
-    t.end();
-});
 
 const importingPkg = new Metadata.Package(
-    'SpecularJS/Importing',
+    'specularJS', 'importing',
 );
 importingPkg.importPackage(_pkg);
 
@@ -45,20 +37,19 @@ export const ImportingDoc = new Metadata.Struct(
 
 test('imported instantiation', (t) => {
     const obj = {
-        __type: "SpecularJS/TestPackage:Response",
         "body": null
     };
-    const s = importingPkg.requireBuildFromJSON(obj);
+    const s = importingPkg.requireBuildFromJSON(ResponseMeta.path, obj);
     t.equal(s.body, null);
     t.end();
 });
 
 test('unmatched case instantiation', (t) => {
     const obj = {
-        __type: "SpeculARJS/testPackage:Response",
         "body": null
     };
-    const s = importingPkg.requireBuildFromJSON(obj);
+    const sp = StructPath.fromString(ResponseMeta.path.mediaType.toUpperCase());
+    const s = _pkg.requireBuildFromJSON(sp, obj);
     t.equal(s.body, null);
     t.end();
 });
