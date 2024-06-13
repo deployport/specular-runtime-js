@@ -1,5 +1,5 @@
 import Content from "../runtime/content.js";
-import Package from "./package.js";
+import Package, { PackagePath, mediaTypeSeparator, moduleSuperType } from "./package.js";
 import { GenericProperties, SerializedProperties } from "../runtime/struct.js";
 import Property from "./property.js";
 import UserDefinedType from "./userDefinedType.js";
@@ -7,19 +7,46 @@ import { TypeRef } from "./typeRef.js";
 import Enum from "./enum.js";
 import { BlobToBase64, ParseOptionalBinary } from "../runtime/builtin.js";
 
+export class StructPath {
+    readonly module: PackagePath;
+    readonly name: string;
+    readonly mediaType: string;
+    constructor(module: PackagePath, name: string) {
+        this.module = module;
+        this.name = name;
+        this.mediaType = `${module.mediaTypeSubType}.${name}`;
+    }
+    toString() {
+        return this.mediaType;
+    }
+
+    // parses a content type like application/spec.<namespace>.<module>
+    static fromString(str: string): StructPath {
+        const parentMediaTypeIndex = str.indexOf(moduleSuperType);
+        if (parentMediaTypeIndex === -1) {
+            throw new Error(`invalid package path ${str}`);
+        }
+        const parts = str.slice(parentMediaTypeIndex + moduleSuperType.length + mediaTypeSeparator.length).split(mediaTypeSeparator);
+        if (parts.length != 3) {
+            throw new Error(`invalid package path ${str}`);
+        }
+        return new StructPath(new PackagePath(parts[0], parts[1]), parts[2]);
+    }
+}
+
 export default class Struct implements UserDefinedType {
     readonly name: string;
     readonly package: Package;
-    // readonly base: Struct | null = null;
+    readonly path: StructPath;
     private readonly properties: Property[] = [];
-    constructor(pkg: Package, name: string,
-        // base: Struct | null,
-    ) {
+
+    constructor(pkg: Package, name: string) {
         this.package = pkg;
         this.name = name;
-        // this.base = base;
+        this.path = new StructPath(pkg.path, name);
         pkg._addType(this);
     }
+
     problemInstantiate: ((msg: string) => any) | null = null;
 
     instantiate(content: Content | null) {
@@ -29,11 +56,10 @@ export default class Struct implements UserDefinedType {
         } else {
             st = {};
         }
-        st.__type = this.fqtn;
         return st;
     }
 
-    get fqtn(): string {
+    get mediaType(): string {
         return this.package.path + ":" + this.name;
     }
 
@@ -47,13 +73,13 @@ export default class Struct implements UserDefinedType {
     propertyByName(name: string): Property | null {
         return this.properties.find(p => p.name === name) || null;
     }
+
     /**
      * Returns properties ready to be send over the network.
      * Includes special property __type with the fqtn of the struct
      */
     async serialize(props: GenericProperties): Promise<SerializedProperties> {
         const json: SerializedProperties = {};
-        json.__type = this.fqtn; // override from base
         for (const prop of this.properties) {
             const value = props[prop.name];
             if (value === undefined) {
@@ -133,7 +159,7 @@ function deserializeFromJSON(typeRef: TypeRef, value: any): any {
                 if (value === null) {
                     return null;
                 }
-                return typeRef.Type.package.requireBuildFromJSON(value);
+                return typeRef.Type.package.requireBuildFromJSON(typeRef.Type.path, value);
             } else if (typeRef.Type instanceof Enum) {
                 // TODO: validate enum value
                 return value;

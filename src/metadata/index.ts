@@ -1,5 +1,5 @@
-export { default as Package } from './package.js';
-export { default as Struct } from './struct.js';
+export { default as Package, PackagePath } from './package.js';
+export { default as Struct, StructPath } from './struct.js';
 export { default as Operation } from './operation.js';
 export { default as Resource } from './resource.js';
 export { default as Property } from './property.js';

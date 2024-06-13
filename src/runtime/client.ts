@@ -1,5 +1,6 @@
 import Operation from "../metadata/operation.js";
 import Package from "../metadata/package.js";
+import { StructPath } from "../metadata/struct.js";
 import { Properties } from "./content.js";
 import { HTTPRequest, Part, StreamMultipartMixedChunks } from "./http.js";
 import { GenericProperties } from "./struct.js";
@@ -21,24 +22,33 @@ interface httpResult {
     error?: httpError
     heartbeat?: boolean
 }
+const contentTypeFormat = "+json"
+
+const cleanHTTPContentTypeFormat = (contentType: string): string => {
+    const idx = contentType.indexOf(contentTypeFormat);
+    if (idx === -1) {
+        return contentType;
+    }
+    return contentType.substring(0, idx);
+}
 
 async function parseHTTPResult(pkg: Package, contentType: string, parseBody: () => Promise<any>): Promise<httpResult> {
-    if (contentType === "specular/struct") {
-        const outputJSON = await parseBody() as Properties;
-        const responseStruct = pkg.requireBuildFromJSON(outputJSON);
-        if (responseStruct instanceof Error) {
-            throw responseStruct;
-        }
-        return { struct: responseStruct };
+    const outputJSON = await parseBody() as Properties;
+    const mediaType = StructPath.fromString(cleanHTTPContentTypeFormat(contentType));
+    const responseStruct = pkg.requireBuildFromJSON(mediaType, outputJSON);
+    if (responseStruct instanceof Error) {
+        throw responseStruct;
     }
-    if (contentType === "specular/error") {
-        const err = await parseBody() as httpError;
-        return { error: err };
-    }
-    if (contentType === "specular/heartbeat") {
-        return { heartbeat: true };
-    }
-    throw new Error("not implemented " + contentType);
+    return { struct: responseStruct };
+    // // TODO: handle other content types
+    // if (contentType === "specular/error") {
+    //     const err = await parseBody() as httpError;
+    //     return { error: err };
+    // }
+    // if (contentType === "specular/heartbeat") {
+    //     return { heartbeat: true };
+    // }
+    // throw new Error("not implemented " + contentType);
 }
 
 export type Submission = {

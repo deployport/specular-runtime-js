@@ -1,30 +1,34 @@
 import test from 'tape';
-import { SpecularPackage } from './generated-client/specular.js';
+import { SpecularPackage, ResponseMeta } from './generated-client/specular.js';
 import {
     Metadata,
 } from '../lib/index.js';
-
+import { StructPath } from '../lib/metadata/struct.js';
 
 const _pkg = SpecularPackage();
 
+test('StructPath', (t) => {
+    const sp = StructPath.fromString('application/spec.myns.mymod.mytype');
+    t.equal(sp.name, "mytype");
+    t.equal(sp.module.namespace, "myns");
+    t.equal(sp.module.name, "mymod");
+    t.end();
+});
+
 test('Hydrate', (t) => {
     const obj = {
-        __type: "SpecularJS/TestPackage:Response",
         "body": null
     };
-    t.equal("SpecularJS/TestPackage:Response", obj.__type);
-    const s = _pkg.requireBuildFromJSON(obj);
+    const s = _pkg.requireBuildFromJSON(ResponseMeta.path, obj);
     t.equal(s.body, null);
     t.end();
 });
 
 test('HydrateNotCase', (t) => {
     const obj = {
-        __type: "SpecularJS/TestPackage:Response",
         "body": null
     };
-    t.equal("SpecularJS/TestPackage:Response", obj.__type);
-    const s = _pkg.requireBuildFromJSON(obj);
+    const s = _pkg.requireBuildFromJSON(ResponseMeta.path.toString().toUpper(), obj);
     t.equal(s.body, null);
     t.end();
 });
