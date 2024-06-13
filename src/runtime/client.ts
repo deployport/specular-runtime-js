@@ -168,7 +168,11 @@ export default class Client {
         const abortController = new AbortController();
         const res = await this.postOperation(operation, input, abortController);
         const partCallback = async (chunk: Part): Promise<void> => {
-            const result = await parseHTTPResult(operation.resource.package, chunk.headers['content-type'], async () => JSON.parse(chunk.body));
+            const result = await parseHTTPResult(
+                operation.resource.package,
+                chunk.headers['content-type'],
+                async () => JSON.parse(chunk.body),
+            );
             if (result.heartbeat) {
                 return;
             }
@@ -179,11 +183,13 @@ export default class Client {
                 await outputCallback(result.struct);
                 return;
             }
+
             // const outputJSON = JSON.parse(chunk.body) as Properties;
             // const responseStruct = operation.resource.package.requireBuildFromJSON(outputJSON);
             // if (responseStruct instanceof Error) {
             //     throw responseStruct;
             // }
+
             throw new Error("unexpected result");
         };
         try {
