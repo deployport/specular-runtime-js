@@ -1,4 +1,5 @@
-library package specularjs/testpackage
+@specular:Endpoint(base="http://localhost:8080")
+service package specularjs/testpackage
 
 struct Body {
     contentLength: int32!

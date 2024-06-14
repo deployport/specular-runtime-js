@@ -24,9 +24,9 @@ export interface BodyProperties {
     // * Returns "specularjs/testpackage.Body"
     // */
     // fqtn: "specularjs/testpackage.Body";
-    contentLength : number;
-};
-export interface Body extends BodyProperties, Runtime.StructInterface {};
+    contentLength : number
+}
+export interface Body extends BodyProperties, Runtime.StructInterface {}
 export const ResponseMeta = new Metadata.Struct(
     _pkg, 
     "Response", 
@@ -42,9 +42,9 @@ export interface ResponseProperties {
     // * Returns "specularjs/testpackage.Response"
     // */
     // fqtn: "specularjs/testpackage.Response";
-    body : BodyProperties| null;
-};
-export interface Response extends ResponseProperties, Runtime.StructInterface {};
+    body : BodyProperties| null
+}
+export interface Response extends ResponseProperties, Runtime.StructInterface {}
 export const NotFoundProblemMeta = new Metadata.Struct(
     _pkg, 
     "NotFoundProblem", 
@@ -75,16 +75,16 @@ export interface NotFoundProblemProperties {
     // * Returns "specularjs/testpackage.NotFoundProblem"
     // */
     // fqtn: "specularjs/testpackage.NotFoundProblem";
-    detail : string;
-    status : number;
-    title : string;
-    message : string;
-};
+    detail : string
+    status : number
+    title : string
+    message : string
+}
 export class NotFoundProblem extends Error implements NotFoundProblemProperties, Runtime.StructInterface {
-    detail : string;
-    status : number;
-    title : string;
-    message : string;
+    detail : string
+    status : number
+    title : string
+    message : string
     get __structPath(): Metadata.StructPath {
         return NotFoundProblemMeta.path
     }
@@ -100,8 +100,8 @@ export interface TestHTTPGetInputProperties {
     // * Returns "specularjs/testpackage.TestHTTPGetInput"
     // */
     // fqtn: "specularjs/testpackage.TestHTTPGetInput";
-};
-export interface TestHTTPGetInput extends TestHTTPGetInputProperties, Runtime.StructInterface {};
+}
+export interface TestHTTPGetInput extends TestHTTPGetInputProperties, Runtime.StructInterface {}
 export const TestHTTPGetOutputMeta = new Metadata.Struct(
     _pkg, 
     "TestHTTPGetOutput", 
@@ -117,9 +117,9 @@ export interface TestHTTPGetOutputProperties {
     // * Returns "specularjs/testpackage.TestHTTPGetOutput"
     // */
     // fqtn: "specularjs/testpackage.TestHTTPGetOutput";
-    response : ResponseProperties| null;
-};
-export interface TestHTTPGetOutput extends TestHTTPGetOutputProperties, Runtime.StructInterface {};
+    response : ResponseProperties| null
+}
+export interface TestHTTPGetOutput extends TestHTTPGetOutputProperties, Runtime.StructInterface {}
 export const TestHTTPOtherInputMeta = new Metadata.Struct(
     _pkg, 
     "TestHTTPOtherInput", 
@@ -130,8 +130,8 @@ export interface TestHTTPOtherInputProperties {
     // * Returns "specularjs/testpackage.TestHTTPOtherInput"
     // */
     // fqtn: "specularjs/testpackage.TestHTTPOtherInput";
-};
-export interface TestHTTPOtherInput extends TestHTTPOtherInputProperties, Runtime.StructInterface {};
+}
+export interface TestHTTPOtherInput extends TestHTTPOtherInputProperties, Runtime.StructInterface {}
 export const TestHTTPOtherOutputMeta = new Metadata.Struct(
     _pkg, 
     "TestHTTPOtherOutput", 
@@ -142,8 +142,8 @@ export interface TestHTTPOtherOutputProperties {
     // * Returns "specularjs/testpackage.TestHTTPOtherOutput"
     // */
     // fqtn: "specularjs/testpackage.TestHTTPOtherOutput";
-};
-export interface TestHTTPOtherOutput extends TestHTTPOtherOutputProperties, Runtime.StructInterface {};
+}
+export interface TestHTTPOtherOutput extends TestHTTPOtherOutputProperties, Runtime.StructInterface {}
 export const TestHTTPWatchChangesInputMeta = new Metadata.Struct(
     _pkg, 
     "TestHTTPWatchChangesInput", 
@@ -154,8 +154,8 @@ export interface TestHTTPWatchChangesInputProperties {
     // * Returns "specularjs/testpackage.TestHTTPWatchChangesInput"
     // */
     // fqtn: "specularjs/testpackage.TestHTTPWatchChangesInput";
-};
-export interface TestHTTPWatchChangesInput extends TestHTTPWatchChangesInputProperties, Runtime.StructInterface {};
+}
+export interface TestHTTPWatchChangesInput extends TestHTTPWatchChangesInputProperties, Runtime.StructInterface {}
 export const TestHTTPWatchChangesOutputMeta = new Metadata.Struct(
     _pkg, 
     "TestHTTPWatchChangesOutput", 
@@ -171,9 +171,9 @@ export interface TestHTTPWatchChangesOutputProperties {
     // * Returns "specularjs/testpackage.TestHTTPWatchChangesOutput"
     // */
     // fqtn: "specularjs/testpackage.TestHTTPWatchChangesOutput";
-    response : ResponseProperties| null;
-};
-export interface TestHTTPWatchChangesOutput extends TestHTTPWatchChangesOutputProperties, Runtime.StructInterface {};
+    response : ResponseProperties| null
+}
+export interface TestHTTPWatchChangesOutput extends TestHTTPWatchChangesOutputProperties, Runtime.StructInterface {}
 
 export function SpecularPackage() {
     return _pkg;
@@ -220,5 +220,41 @@ class TestHTTPResource {
         await this.client.stream(_testHTTPWatchChangesOperationMeta, inputProps, async (output) => {
             await outputCallback(output as unknown as TestHTTPWatchChangesOutput);
         });
+    }
+}
+export function defaultRuntimeConfig(): Runtime.ClientConfig {
+    return {
+        endpoint: "http://localhost:8080",
+    } as Runtime.ClientConfig;
+}
+
+export function createRuntimeClientConfig(config?: Partial<Runtime.ClientConfig>): Runtime.ClientConfig {
+    const c = Runtime.MergeClientConfig(defaultRuntimeConfig(), config); 
+    return c;
+}
+
+export function createRuntimeClient(config?: Partial<Runtime.ClientConfig>): Runtime.Client {
+    return new Runtime.Client(createRuntimeClientConfig(config))
+}
+
+export type ClientConfig = {
+    client?: Runtime.Client
+};
+
+export type Config = ClientConfig & Runtime.ClientConfig;
+/**
+ * @class Client class for package testpackage
+ */
+export class Client {
+    private readonly client: Runtime.Client;
+    public readonly TestHTTP: TestHTTPResource;
+    constructor(config?: Config) {
+        if(config?.client) {
+            this.client = config.client;
+        } else {
+            this.client = createRuntimeClient(config);
+        }
+        console.log("client initialized from allow");
+this.TestHTTP = new TestHTTPResource(this.client);
     }
 }

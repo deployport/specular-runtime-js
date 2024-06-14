@@ -1,6 +1,6 @@
 import { BuiltinMeta } from "../metadata/builtin.js";
 import Operation from "../metadata/operation.js";
-import Package from "../metadata/package.js";
+import Package, { TypeNotFoundError } from "../metadata/package.js";
 import { StructPath } from "../metadata/struct.js";
 import { Properties } from "./content.js";
 import { HTTPRequest, Part, StreamMultipartMixedChunks } from "./http.js";
@@ -22,10 +22,21 @@ const cleanHTTPContentTypeFormat = (contentType: string): string => {
     return contentType.substring(0, idx);
 }
 
+function multirequireBuildFromJSON(pk: Package, mediaType: StructPath, json: Properties): Struct | Error {
+    try {
+        return builtinMeta.Module.requireBuildFromJSON(mediaType, json);
+    } catch (e) {
+        if (e instanceof TypeNotFoundError) {
+            return pk.requireBuildFromJSON(mediaType, json);
+        }
+        throw e;
+    }
+}
+
 async function parseHTTPResult(pkg: Package, contentType: string, parseBody: () => Promise<any>): Promise<Struct> {
     const outputJSON = await parseBody() as Properties;
     const mediaType = StructPath.fromString(cleanHTTPContentTypeFormat(contentType));
-    const responseStruct = pkg.requireBuildFromJSON(mediaType, outputJSON);
+    const responseStruct = multirequireBuildFromJSON(pkg, mediaType, outputJSON);
     if (responseStruct instanceof Error) {
         throw responseStruct;
     }

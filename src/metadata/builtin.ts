@@ -1,7 +1,7 @@
 import { StructInterface } from "../runtime/struct.js";
 import Package from "./package.js";
 import Property from "./property.js";
-import Struct from "./struct.js";
+import Struct, { StructPath } from "./struct.js";
 
 export class BuiltinMetaInfo {
     readonly Module: Package
@@ -44,16 +44,18 @@ new Property(builtinErrMeta, "code", {
     Builtin: "string"
 });
 
-type ErrProperties = {
+export interface ErrProperties {
     message: string
     resource?: string
     operation?: string
     code?: string
 }
 
-export interface Err extends ErrProperties, StructInterface { };
-export class Err
-    extends Error { }
+export class Err extends Error implements ErrProperties, StructInterface {
+    get __structPath(): StructPath {
+        return builtinErrMeta.path
+    }
+}
 builtinErrMeta.problemInstantiate = (msg: string) => new Err(msg);
 
 

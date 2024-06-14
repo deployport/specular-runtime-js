@@ -58,3 +58,26 @@ export interface TestHTTPWatchChangesOutputProperties {
 export interface TestHTTPWatchChangesOutput extends TestHTTPWatchChangesOutputProperties, Runtime.StructInterface {
 }
 export declare function SpecularPackage(): Metadata.Package;
+declare class TestHTTPResource {
+    private readonly client;
+    constructor(client: Runtime.Client);
+    Get(inputProps: TestHTTPGetInputProperties): Promise<TestHTTPGetOutput>;
+    Other(inputProps: TestHTTPOtherInputProperties): Promise<TestHTTPOtherOutput>;
+    WatchChanges(inputProps: TestHTTPWatchChangesInputProperties, outputCallback: (TestHTTPWatchChangesOutput: any) => Promise<void>): Promise<void>;
+}
+export declare function defaultRuntimeConfig(): Runtime.ClientConfig;
+export declare function createRuntimeClientConfig(config?: Partial<Runtime.ClientConfig>): Runtime.ClientConfig;
+export declare function createRuntimeClient(config?: Partial<Runtime.ClientConfig>): Runtime.Client;
+export type ClientConfig = {
+    client?: Runtime.Client;
+};
+export type Config = ClientConfig & Runtime.ClientConfig;
+/**
+ * @class Client class for package testpackage
+ */
+export declare class Client {
+    private readonly client;
+    readonly TestHTTP: TestHTTPResource;
+    constructor(config?: Config);
+}
+export {};
