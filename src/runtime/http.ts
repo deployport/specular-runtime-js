@@ -116,7 +116,7 @@ export class HTTPRequest {
                     h.push([key, v]);
                 }
             } else {
-                h.push([key, val]);
+                h.push([key, val || '']);
             }
         }
         const hh = new Headers(h);

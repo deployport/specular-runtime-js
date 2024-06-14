@@ -17,11 +17,60 @@ new Metadata.Property(ResponseMeta, "body", {
 });
 ;
 ;
+export const NotFoundProblemMeta = new Metadata.Struct(_pkg, "NotFoundProblem");
+new Metadata.Property(NotFoundProblemMeta, "detail", {
+    NonNullable: true,
+    SubType: "builtin",
+    Builtin: "string"
+});
+new Metadata.Property(NotFoundProblemMeta, "status", {
+    NonNullable: true,
+    SubType: "builtin",
+    Builtin: "int32"
+});
+new Metadata.Property(NotFoundProblemMeta, "title", {
+    NonNullable: true,
+    SubType: "builtin",
+    Builtin: "string"
+});
+new Metadata.Property(NotFoundProblemMeta, "message", {
+    NonNullable: true,
+    SubType: "builtin",
+    Builtin: "string"
+});
+;
+export class NotFoundProblem extends Error {
+    detail;
+    status;
+    title;
+    message;
+    get __structPath() {
+        return NotFoundProblemMeta.path;
+    }
+}
+NotFoundProblemMeta.problemInstantiate = (msg) => new NotFoundProblem(msg);
 export const TestHTTPGetInputMeta = new Metadata.Struct(_pkg, "TestHTTPGetInput");
 ;
 ;
 export const TestHTTPGetOutputMeta = new Metadata.Struct(_pkg, "TestHTTPGetOutput");
 new Metadata.Property(TestHTTPGetOutputMeta, "response", {
+    NonNullable: false,
+    SubType: "userDefined",
+    Type: SpecularPackage().requireTypeByName("Response")
+});
+;
+;
+export const TestHTTPOtherInputMeta = new Metadata.Struct(_pkg, "TestHTTPOtherInput");
+;
+;
+export const TestHTTPOtherOutputMeta = new Metadata.Struct(_pkg, "TestHTTPOtherOutput");
+;
+;
+export const TestHTTPWatchChangesInputMeta = new Metadata.Struct(_pkg, "TestHTTPWatchChangesInput");
+;
+;
+export const TestHTTPWatchChangesOutputMeta = new Metadata.Struct(_pkg, "TestHTTPWatchChangesOutput");
+new Metadata.Property(TestHTTPWatchChangesOutputMeta, "response", {
     NonNullable: false,
     SubType: "userDefined",
     Type: SpecularPackage().requireTypeByName("Response")
@@ -38,6 +87,18 @@ const _testHTTPGetOperationMeta = new Metadata.Operation({
     input: TestHTTPGetInputMeta,
     output: TestHTTPGetOutputMeta,
 });
+const _testHTTPOtherOperationMeta = new Metadata.Operation({
+    resource: _testHTTPResourceMeta,
+    name: "Other",
+    input: TestHTTPOtherInputMeta,
+    output: TestHTTPOtherOutputMeta,
+});
+const _testHTTPWatchChangesOperationMeta = new Metadata.Operation({
+    resource: _testHTTPResourceMeta,
+    name: "WatchChanges",
+    input: TestHTTPWatchChangesInputMeta,
+    output: TestHTTPWatchChangesOutputMeta,
+});
 // TestHTTPResource is the TestHTTPResource resource client
 class TestHTTPResource {
     client;
@@ -47,5 +108,14 @@ class TestHTTPResource {
     async Get(inputProps) {
         const res = await this.client.execute(_testHTTPGetOperationMeta, inputProps);
         return res;
+    }
+    async Other(inputProps) {
+        const res = await this.client.execute(_testHTTPOtherOperationMeta, inputProps);
+        return res;
+    }
+    async WatchChanges(inputProps, outputCallback) {
+        await this.client.stream(_testHTTPWatchChangesOperationMeta, inputProps, async (output) => {
+            await outputCallback(output);
+        });
     }
 }

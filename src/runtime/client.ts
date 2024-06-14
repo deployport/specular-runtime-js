@@ -125,7 +125,7 @@ export default class Client {
      * @param input 
      * @returns the output struct of the operation
      */
-    async execute(operation: Operation, inputProps: GenericProperties): Promise<GenericProperties> {
+    async execute(operation: Operation, inputProps: GenericProperties): Promise<Struct> {
         const res = await this.postOperation(operation, inputProps, new AbortController());
         // check if content type is specular/struct
         const contentType = res.headers.get("Content-Type");

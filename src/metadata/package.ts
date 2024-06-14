@@ -122,10 +122,10 @@ export default class Package {
 
     buildByFQTN(structPath: StructPath, content: Content): RuntimeStruct {
         const structMeta = this.structByFQTN(structPath);
-        const struct: RuntimeStruct = {
+        const struct = {
             ...structMeta.deserialize(content),
             __structPath: structPath,
-        };
+        } as RuntimeStruct;
         return struct;
     }
 

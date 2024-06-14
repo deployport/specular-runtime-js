@@ -8,8 +8,26 @@ struct Response {
     body: Body
 }
 
+
+problem struct NotFoundProblem {
+    title: string!
+    status: int32!
+    detail: string!
+}
+
 resource TestHTTP {
     operation Get {
+        input struct {}
+        output struct {
+            response: Response
+        }
+    }
+    operation Other {
+        output struct {
+
+        }
+    }
+    streamed operation WatchChanges {
         input struct {}
         output struct {
             response: Response

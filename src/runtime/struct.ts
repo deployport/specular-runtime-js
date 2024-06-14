@@ -13,15 +13,14 @@ export class HydrateContext {
         this.package = pkg;
     }
 }
-
-type ExplicitRecord<K extends keyof any, T> = {
-    [P in K]: { value: T }
-};
+export interface ExplicitRecord<T> {
+    [key: string]: T;
+}
 
 export interface StructInterface {
     __structPath: StructPath;
 }
 
-export type GenericProperties = ExplicitRecord<string, any>;
-export type SerializedProperties = ExplicitRecord<string, any>;
+export interface GenericProperties extends ExplicitRecord<any> { }
+export interface SerializedProperties extends ExplicitRecord<any> { }
 export type Struct = GenericProperties & StructInterface;

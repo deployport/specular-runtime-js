@@ -27,10 +27,10 @@ export class StructPath {
             throw new Error(`invalid package path ${str}`);
         }
         const parts = str.slice(parentMediaTypeIndex + moduleSuperType.length + mediaTypeSeparator.length).split(mediaTypeSeparator);
-        if (parts.length != 3) {
+        if (parts.length < 3) {
             throw new Error(`invalid package path ${str}`);
         }
-        return new StructPath(new PackagePath(parts[0], parts[1]), parts[2]);
+        return new StructPath(new PackagePath(parts[0]!, parts[1]!), parts[2]!);
     }
 }
 
