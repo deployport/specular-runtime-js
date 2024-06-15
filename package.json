@@ -18,8 +18,8 @@
     "prepare": "npm run build",
     "clean": "rm -rf lib",
     "lint": "eslint . --ext .ts",
-    "test": "npm run build && node test/Hydrate.test.js",
-    "test-gen": "cd test && specular generate"
+    "test": "npm run build && npm run test-gen && node test/Hydrate.test.js && npm run lint",
+    "test-gen": "cd test && specular-standalone-compiler generate"
   },
   "devDependencies": {
     "@tsconfig/node18": "^18.2.2",

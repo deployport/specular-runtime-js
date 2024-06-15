@@ -1,4 +1,5 @@
-library package specularjs/testpackage
+@specular:Endpoint(base="http://localhost:8080")
+service package specularjs/testpackage
 
 struct Body {
     contentLength: int32!
@@ -8,8 +9,26 @@ struct Response {
     body: Body
 }
 
+
+problem struct NotFoundProblem {
+    title: string!
+    status: int32!
+    detail: string!
+}
+
 resource TestHTTP {
     operation Get {
+        input struct {}
+        output struct {
+            response: Response
+        }
+    }
+    operation Other {
+        output struct {
+
+        }
+    }
+    streamed operation WatchChanges {
         input struct {}
         output struct {
             response: Response

@@ -4,11 +4,7 @@ export function CreateContentFromObject(obj: any): Content | null {
     if (obj == null) {
         return null;
     }
-    const fqtn = obj['__type'];
-    if (fqtn == null) {
-        return null;
-    }
-    return new Content(fqtn, obj);
+    return new Content(obj);
 }
 
 export function CreateContentObjectArray(potentialArray: any): (Content | null)[] | null {
@@ -32,13 +28,9 @@ export function CreateContentObjectArray(potentialArray: any): (Content | null)[
 }
 
 export default class Content {
-    public fqtn: string = '';
     properties?: Properties;
 
-    constructor(fqtn?: string, properties?: Properties) {
-        if (fqtn) {
-            this.fqtn = fqtn;
-        }
+    constructor(properties?: Properties) {
         if (properties) {
             this.properties = properties;
         } else {
@@ -62,7 +54,6 @@ export default class Content {
     toJSON() {
         return {
             ...this.properties,
-            "__type": this.fqtn,
         };
     }
 }

@@ -1,44 +1,46 @@
+import { BuiltinMeta } from "../metadata/builtin.js";
 import Operation from "../metadata/operation.js";
-import Package from "../metadata/package.js";
+import Package, { TypeNotFoundError } from "../metadata/package.js";
+import { StructPath } from "../metadata/struct.js";
 import { Properties } from "./content.js";
 import { HTTPRequest, Part, StreamMultipartMixedChunks } from "./http.js";
-import { GenericProperties } from "./struct.js";
+import { GenericProperties, Struct } from "./struct.js";
 
-interface httpError {
-    readonly message: string
-    resource: string
-    operation: string
-    // HTTPStatusCode int`json:"-"`
-    code: string
-}
+const builtinMeta = BuiltinMeta();
 
-function newHttpErrorException(err: httpError): Error {
+function newHttpErrorException(err: Struct): Error {
     return new Error(err.message + " " + err.code);
 }
 
-interface httpResult {
-    struct?: GenericProperties
-    error?: httpError
-    heartbeat?: boolean
+const contentTypeFormat = "+json"
+
+const cleanHTTPContentTypeFormat = (contentType: string): string => {
+    const idx = contentType.indexOf(contentTypeFormat);
+    if (idx === -1) {
+        return contentType;
+    }
+    return contentType.substring(0, idx);
 }
 
-async function parseHTTPResult(pkg: Package, contentType: string, parseBody: () => Promise<any>): Promise<httpResult> {
-    if (contentType === "specular/struct") {
-        const outputJSON = await parseBody() as Properties;
-        const responseStruct = pkg.requireBuildFromJSON(outputJSON);
-        if (responseStruct instanceof Error) {
-            throw responseStruct;
+function multirequireBuildFromJSON(pk: Package, mediaType: StructPath, json: Properties): Struct | Error {
+    try {
+        return builtinMeta.Module.requireBuildFromJSON(mediaType, json);
+    } catch (e) {
+        if (e instanceof TypeNotFoundError) {
+            return pk.requireBuildFromJSON(mediaType, json);
         }
-        return { struct: responseStruct };
+        throw e;
     }
-    if (contentType === "specular/error") {
-        const err = await parseBody() as httpError;
-        return { error: err };
+}
+
+async function parseHTTPResult(pkg: Package, contentType: string, parseBody: () => Promise<any>): Promise<Struct> {
+    const outputJSON = await parseBody() as Properties;
+    const mediaType = StructPath.fromString(cleanHTTPContentTypeFormat(contentType));
+    const responseStruct = multirequireBuildFromJSON(pkg, mediaType, outputJSON);
+    if (responseStruct instanceof Error) {
+        throw responseStruct;
     }
-    if (contentType === "specular/heartbeat") {
-        return { heartbeat: true };
-    }
-    throw new Error("not implemented " + contentType);
+    return responseStruct;
 }
 
 export type Submission = {
@@ -125,7 +127,7 @@ export default class Client {
      * @param input 
      * @returns the output struct of the operation
      */
-    async execute(operation: Operation, inputProps: GenericProperties): Promise<GenericProperties> {
+    async execute(operation: Operation, inputProps: GenericProperties): Promise<Struct> {
         const res = await this.postOperation(operation, inputProps, new AbortController());
         // check if content type is specular/struct
         const contentType = res.headers.get("Content-Type");
@@ -133,17 +135,14 @@ export default class Client {
             throw new Error("invalid response, missing content type");
         }
         const result = await parseHTTPResult(operation.resource.package, contentType, async () => await res.json());
-
-        if (result.struct) {
-            return result.struct;
-        }
-        if (result.error) {
-            throw newHttpErrorException(result.error);
-        }
-        if (result.heartbeat) {
+        if (builtinMeta.HeartbeatMeta.path === result.__structPath) {
             throw new Error("unexpected heartbeat");
+        } else if (builtinMeta.ErrMeta.path === result.__structPath) {
+            throw newHttpErrorException(result);
+        } else if (result instanceof Error) {
+            throw result;
         }
-        throw new Error("unexpected result");
+        return result;
     }
 
     /**
@@ -158,23 +157,19 @@ export default class Client {
         const abortController = new AbortController();
         const res = await this.postOperation(operation, input, abortController);
         const partCallback = async (chunk: Part): Promise<void> => {
-            const result = await parseHTTPResult(operation.resource.package, chunk.headers['content-type'], async () => JSON.parse(chunk.body));
-            if (result.heartbeat) {
+            const result = await parseHTTPResult(
+                operation.resource.package,
+                chunk.headers['content-type'] || '',
+                async () => JSON.parse(chunk.body),
+            );
+            if (builtinMeta.HeartbeatMeta.path === result.__structPath) {
                 return;
+            } else if (builtinMeta.ErrMeta.path === result.__structPath) {
+                throw newHttpErrorException(result);
+            } else if (result instanceof Error) {
+                throw result;
             }
-            if (result.error) {
-                throw newHttpErrorException(result.error);
-            }
-            if (result.struct) {
-                await outputCallback(result.struct);
-                return;
-            }
-            // const outputJSON = JSON.parse(chunk.body) as Properties;
-            // const responseStruct = operation.resource.package.requireBuildFromJSON(outputJSON);
-            // if (responseStruct instanceof Error) {
-            //     throw responseStruct;
-            // }
-            throw new Error("unexpected result");
+            await outputCallback(result);
         };
         try {
             await StreamMultipartMixedChunks(res, partCallback);

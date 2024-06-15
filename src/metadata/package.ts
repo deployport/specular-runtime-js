@@ -1,18 +1,43 @@
 import Content, { CreateContentFromObject } from "../runtime/content.js";
 import Resource from "./resource.js";
-import Struct from "./struct.js";
+import Struct, { StructPath } from "./struct.js";
 import UserDefinedType from "./userDefinedType.js";
-import { GenericProperties } from "../runtime/struct.js";
+import { GenericProperties, Struct as RuntimeStruct } from "../runtime/struct.js";
 
-function normalizeMapEntry(key: string): string {
+export function normalizeMapEntry(key: string): string {
     return key.toLowerCase();
+}
+
+export const moduleSuperType = "application/spec";
+export const mediaTypeSeparator = "."
+
+/**
+ * PackagePath contains the scope of the package
+ */
+export class PackagePath {
+    readonly namespace: string;
+    readonly name: string;
+    /**
+     * mediaTypeSubType returns the media type sub type for the package
+     * as in application/spec.<namespace>.<module>
+     */
+    readonly mediaTypeSubType: string;
+    constructor(namespace: string, name: string) {
+        this.namespace = normalizeMapEntry(namespace);
+        this.name = normalizeMapEntry(name);
+        this.mediaTypeSubType = `${moduleSuperType}.${this.namespace}.${this.name}`;
+    }
+
+    toString() {
+        return this.mediaTypeSubType;
+    }
 }
 
 /**
  * Package
  */
 export default class Package {
-    public readonly path: string;
+    readonly path: PackagePath;
     private readonly resources: Resource[] = [];
     private readonly types: UserDefinedType[] = [];
 
@@ -24,8 +49,11 @@ export default class Package {
     private allPackages: Package[] = [];
     private structsByFQTN: Map<string, Struct> = new Map();
 
-    constructor(path: string) {
-        this.path = path;
+    constructor(namespace: string, module: string) {
+        this.path = new PackagePath(
+            namespace,
+            module,
+        )
         this.allPackages.push(this);
     }
 
@@ -73,7 +101,7 @@ export default class Package {
         }
         this.types.push(tp);
         if (tp instanceof Struct) {
-            this.structsByFQTN.set(normalizeMapEntry(tp.fqtn), tp);
+            this.structsByFQTN.set(normalizeMapEntry(tp.path.mediaType), tp);
         }
     }
     /**
@@ -81,60 +109,62 @@ export default class Package {
      * @param fqtn 
      * @returns 
      */
-    structByFQTN(fqtn: string): Struct {
-        fqtn = normalizeMapEntry(fqtn);
+    structByFQTN(structPath: StructPath,): Struct {
+        const mediaType = normalizeMapEntry(structPath.mediaType);
         for (const pkg of this.allPackages) {
-            const struct = pkg.structsByFQTN.get(fqtn);
+            const struct = pkg.structsByFQTN.get(mediaType);
             if (struct) {
                 return struct;
             }
         }
-        throw new TypeNotFoundError(fqtn);
+        throw new TypeNotFoundError(structPath.mediaType);
     }
 
-    buildByFQTN(fqtn: string, content: Content): GenericProperties {
-        const structMeta = this.structByFQTN(fqtn);
-        const struct = structMeta.deserialize(content)
+    buildByFQTN(structPath: StructPath, content: Content): RuntimeStruct {
+        const structMeta = this.structByFQTN(structPath);
+        const struct = {
+            ...structMeta.deserialize(content),
+            __structPath: structPath,
+        } as RuntimeStruct;
         return struct;
     }
 
-    requireBuildFromJSON(structJSON: Record<string, any> | object | any): GenericProperties {
+    requireBuildFromJSON(structPath: StructPath, structJSON: Record<string, any> | object | any): RuntimeStruct {
         const responseContent = CreateContentFromObject(structJSON);
         if (!responseContent) {
             throw new Error("failed to create content from malformed JSON");
         }
-        const fqdn = responseContent.fqtn;
-        return this.requireBuildByFQTN(fqdn, responseContent);
+        return this.requireBuildByFQTN(structPath, responseContent);
     }
 
-    requireBuildByFQTN(fqdn: string, content: Content): GenericProperties {
-        const st = this.buildByFQTN(fqdn, content);
+    requireBuildByFQTN(structPath: StructPath, content: Content): RuntimeStruct {
+        const st = this.buildByFQTN(structPath, content);
         if (!st) {
-            throw new Error(`failed to build struct ${fqdn}`);
+            throw new Error(`failed to build struct ${structPath}`);
         }
         return st;
     }
 
-    requireBuildArrayNullableItems(contentArray: (Content | null)[]): (GenericProperties | null)[] {
+    requireBuildArrayNullableItems(structPath: StructPath, contentArray: (Content | null)[]): (GenericProperties | null)[] {
         const stArray: (GenericProperties | null)[] = [];
         for (const content of contentArray) {
             if (content == null) {
                 stArray.push(null);
                 continue;
             }
-            const st = this.requireBuildByFQTN(content.fqtn, content);
+            const st = this.requireBuildByFQTN(structPath, content);
             stArray.push(st);
         }
         return stArray;
     }
-    requireBuildArrayNonNullableItems(contentArray: (Content | null)[]): GenericProperties[] {
+    requireBuildArrayNonNullableItems(structPath: StructPath, contentArray: (Content | null)[]): GenericProperties[] {
         const stArray: GenericProperties[] = [];
         for (const [index, value] of contentArray.entries()) {
             const content = value;
             if (content == null) {
                 throw new Error(`failed to build struct at index ${index}, unexpected null item`);
             }
-            const st = this.requireBuildByFQTN(content.fqtn, content);
+            const st = this.requireBuildByFQTN(structPath, content);
             stArray.push(st);
         }
         return stArray;
