@@ -41,15 +41,6 @@ async function parseHTTPResult(pkg: Package, contentType: string, parseBody: () 
         throw responseStruct;
     }
     return responseStruct;
-    // // TODO: handle other content types
-    // if (contentType === "specular/error") {
-    //     const err = await parseBody() as httpError;
-    //     return { error: err };
-    // }
-    // if (contentType === "specular/heartbeat") {
-    //     return { heartbeat: true };
-    // }
-    // throw new Error("not implemented " + contentType);
 }
 
 export type Submission = {

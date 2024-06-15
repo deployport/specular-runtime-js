@@ -35,10 +35,10 @@ new Metadata.Property(NotFoundProblemMeta, "message", {
     Builtin: "string"
 });
 export class NotFoundProblem extends Error {
-    detail;
-    status;
-    title;
-    message;
+    detail = '';
+    status = 0;
+    title = '';
+    message = '';
     get __structPath() {
         return NotFoundProblemMeta.path;
     }

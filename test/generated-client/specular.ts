@@ -81,10 +81,10 @@ export interface NotFoundProblemProperties {
     message : string
 }
 export class NotFoundProblem extends Error implements NotFoundProblemProperties, Runtime.StructInterface {
-    detail : string
-    status : number
-    title : string
-    message : string
+    detail : string = ''
+    status : number = 0
+    title : string = ''
+    message : string = ''
     get __structPath(): Metadata.StructPath {
         return NotFoundProblemMeta.path
     }
