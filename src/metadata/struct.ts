@@ -3,7 +3,7 @@ import Package, { PackagePath, mediaTypeSeparator, moduleSuperType, normalizeMap
 import { GenericProperties, SerializedProperties } from "../runtime/struct.js";
 import Property from "./property.js";
 import UserDefinedType from "./userDefinedType.js";
-import { TypeRef } from "./typeRef.js";
+import { TypeRef, isIntegral } from "./typeRef.js";
 import Enum from "./enum.js";
 import { BlobToBase64, ParseOptionalBinary } from "../runtime/builtin.js";
 
@@ -97,9 +97,6 @@ export default class Struct implements UserDefinedType {
     private deserializeStruct(struct: SerializedProperties, content: Content) {
         for (const prop of this.properties) {
             const value = content.getProperty(prop.name);
-            if (value === undefined) {
-                continue;
-            }
             try {
                 const propVal = deserializeFromJSON(prop.type, value);
                 struct[prop.name] = propVal;
@@ -144,16 +141,36 @@ async function serializeToJSON(typeRef: TypeRef, value: any): Promise<any> {
 function deserializeFromJSON(typeRef: TypeRef, value: any): any {
     switch (typeRef.SubType) {
         case "builtin":
-            if (typeRef.Builtin === "time") {
+            if (value === null) {
+                if (typeRef.NonNullable) {
+                    throw new Error(`non-nullable property can not be null`);
+                }
+                return null;
+            } else if (isIntegral(typeRef.Builtin)) {
+                if (value === undefined) {
+                    return typeRef.NonNullable ? 0 : null;
+                }
+                if (typeof value !== 'number') {
+                    throw new Error(`expected number, got ${typeof value}`);
+                }
+                return value;
+            } else if (typeRef.Builtin === "time") {
                 return new Date(value);
-            }
-            else if (typeRef.Builtin == 'binary') {
+            } else if (typeRef.Builtin == 'binary') {
                 return ParseOptionalBinary(value);
+            } else if (typeRef.Builtin === 'string') {
+                if (value === undefined) {
+                    return typeRef.NonNullable ? '' : null;
+                }
+                if (typeof value !== 'string') {
+                    throw new Error(`expected string, got ${typeof value}`);
+                }
+                return value;
             }
             break;
         case "userDefined":
-            if (typeRef.NonNullable && (value == null || value == undefined)) {
-                throw new Error(`expected non-nullable value, got ${value}`);
+            if (value === null || value === undefined) {
+                return null;
             }
             if (typeRef.Type instanceof Struct) {
                 if (value === null) {

@@ -1,7 +1,15 @@
 import { Runtime, Metadata } from '../../lib/index.js';
 export declare const BodyMeta: Metadata.Struct;
 export interface BodyProperties {
-    contentLength: number;
+    contentLengthFloat32: number;
+    contentLengthFloat64: number;
+    contentLengthFloat64Nullable: number | null;
+    contentLengthInt32: number;
+    contentLengthInt64: number;
+    contentLengthUint32: number;
+    contentLengthUint64: number;
+    messageString: string;
+    messageStringNullable: string | null;
 }
 export interface Body extends BodyProperties, Runtime.StructInterface {
 }

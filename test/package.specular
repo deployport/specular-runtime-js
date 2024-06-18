@@ -2,7 +2,15 @@
 service package specularjs/testpackage
 
 struct Body {
-    contentLength: int32!
+    contentLengthInt32: int32!
+    contentLengthInt64: int64!
+    contentLengthFloat32: float32!
+    contentLengthFloat64: float64!
+    contentLengthFloat64Nullable: float64
+    contentLengthUint32: uint32!
+    contentLengthUint64: uint64!
+    messageString: string!
+    messageStringNullable: string
 }
 
 struct Response {

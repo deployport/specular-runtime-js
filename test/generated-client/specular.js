@@ -2,10 +2,50 @@
 import { Runtime, Metadata, } from '../../lib/index.js';
 const _pkg = new Metadata.Package("specularjs", "testpackage");
 export const BodyMeta = new Metadata.Struct(_pkg, "Body");
-new Metadata.Property(BodyMeta, "contentLength", {
+new Metadata.Property(BodyMeta, "contentLengthFloat32", {
+    NonNullable: true,
+    SubType: "builtin",
+    Builtin: "float32"
+});
+new Metadata.Property(BodyMeta, "contentLengthFloat64", {
+    NonNullable: true,
+    SubType: "builtin",
+    Builtin: "float64"
+});
+new Metadata.Property(BodyMeta, "contentLengthFloat64Nullable", {
+    NonNullable: false,
+    SubType: "builtin",
+    Builtin: "float64"
+});
+new Metadata.Property(BodyMeta, "contentLengthInt32", {
     NonNullable: true,
     SubType: "builtin",
     Builtin: "int32"
+});
+new Metadata.Property(BodyMeta, "contentLengthInt64", {
+    NonNullable: true,
+    SubType: "builtin",
+    Builtin: "int64"
+});
+new Metadata.Property(BodyMeta, "contentLengthUint32", {
+    NonNullable: true,
+    SubType: "builtin",
+    Builtin: "uint32"
+});
+new Metadata.Property(BodyMeta, "contentLengthUint64", {
+    NonNullable: true,
+    SubType: "builtin",
+    Builtin: "uint64"
+});
+new Metadata.Property(BodyMeta, "messageString", {
+    NonNullable: true,
+    SubType: "builtin",
+    Builtin: "string"
+});
+new Metadata.Property(BodyMeta, "messageStringNullable", {
+    NonNullable: false,
+    SubType: "builtin",
+    Builtin: "string"
 });
 export const ResponseMeta = new Metadata.Struct(_pkg, "Response");
 new Metadata.Property(ResponseMeta, "body", {

@@ -13,10 +13,50 @@ export const BodyMeta = new Metadata.Struct(
     _pkg, 
     "Body", 
 );
-new Metadata.Property(BodyMeta, "contentLength", {
+new Metadata.Property(BodyMeta, "contentLengthFloat32", {
+NonNullable: true,
+SubType: "builtin",
+Builtin: "float32"
+});
+new Metadata.Property(BodyMeta, "contentLengthFloat64", {
+NonNullable: true,
+SubType: "builtin",
+Builtin: "float64"
+});
+new Metadata.Property(BodyMeta, "contentLengthFloat64Nullable", {
+NonNullable: false,
+SubType: "builtin",
+Builtin: "float64"
+});
+new Metadata.Property(BodyMeta, "contentLengthInt32", {
 NonNullable: true,
 SubType: "builtin",
 Builtin: "int32"
+});
+new Metadata.Property(BodyMeta, "contentLengthInt64", {
+NonNullable: true,
+SubType: "builtin",
+Builtin: "int64"
+});
+new Metadata.Property(BodyMeta, "contentLengthUint32", {
+NonNullable: true,
+SubType: "builtin",
+Builtin: "uint32"
+});
+new Metadata.Property(BodyMeta, "contentLengthUint64", {
+NonNullable: true,
+SubType: "builtin",
+Builtin: "uint64"
+});
+new Metadata.Property(BodyMeta, "messageString", {
+NonNullable: true,
+SubType: "builtin",
+Builtin: "string"
+});
+new Metadata.Property(BodyMeta, "messageStringNullable", {
+NonNullable: false,
+SubType: "builtin",
+Builtin: "string"
 });
 // Body entity
 export interface BodyProperties {
@@ -24,7 +64,15 @@ export interface BodyProperties {
     // * Returns "specularjs/testpackage.Body"
     // */
     // fqtn: "specularjs/testpackage.Body";
-    contentLength : number
+    contentLengthFloat32 : number
+    contentLengthFloat64 : number
+    contentLengthFloat64Nullable : number| null
+    contentLengthInt32 : number
+    contentLengthInt64 : number
+    contentLengthUint32 : number
+    contentLengthUint64 : number
+    messageString : string
+    messageStringNullable : string| null
 }
 export interface Body extends BodyProperties, Runtime.StructInterface {}
 export const ResponseMeta = new Metadata.Struct(
