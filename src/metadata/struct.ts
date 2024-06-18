@@ -76,16 +76,16 @@ export default class Struct implements UserDefinedType {
 
     /**
      * Returns properties ready to be send over the network.
-     * Includes special property __type with the fqtn of the struct
      */
     async serialize(props: GenericProperties): Promise<SerializedProperties> {
         const json: SerializedProperties = {};
         for (const prop of this.properties) {
             const value = props[prop.name];
-            if (value === undefined) {
+            const svalue = await serializeToJSON(prop.type, value);
+            if (svalue === undefined) {
                 continue;
             }
-            json[prop.name] = await serializeToJSON(prop.type, value);
+            json[prop.name] = svalue;
         }
         return json;
     }
@@ -99,6 +99,9 @@ export default class Struct implements UserDefinedType {
             const value = content.getProperty(prop.name);
             try {
                 const propVal = deserializeFromJSON(prop.type, value);
+                if (propVal === undefined) {
+                    continue;
+                }
                 struct[prop.name] = propVal;
             } catch (e) {
                 throw new Error(`failed to deserialize property '${prop.name}': ${e}`);
@@ -119,7 +122,10 @@ async function serializeToJSON(typeRef: TypeRef, value: any): Promise<any> {
             break;
         case "userDefined":
             if (typeRef.Type instanceof Struct) {
-                return typeRef.Type.serialize(value);
+                if (value === null || value === undefined) {
+                    return undefined
+                }
+                return await typeRef.Type.serialize(value);
             } else if (typeRef.Type instanceof Enum) {
                 // TODO: validate enum value
                 return value;

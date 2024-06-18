@@ -15,7 +15,7 @@ test('StructPath', (t) => {
     t.end();
 });
 
-test('Hydrate with builtins props', (t) => {
+test('Deserialize with builtins props', (t) => {
     t.test("missing", (t) => {
         const obj = {
             "body": {}
@@ -52,7 +52,7 @@ test('Hydrate with builtins props', (t) => {
     });
 });
 
-test('Hydrate with struct props', (t) => {
+test('Deserialize with struct props', (t) => {
     t.test("null field", (t) => {
         const obj = {
             "body": null
@@ -69,6 +69,29 @@ test('Hydrate with struct props', (t) => {
         t.end();
     });
 });
+
+test('Serialize with struct props', (t) => {
+    t.test("missing", async (t) => {
+        const obj = await ResponseMeta.serialize({})
+        t.deepEqual(Object.keys(obj), [])
+        t.end()
+    });
+    t.test("struct prop null", async (t) => {
+        const obj = await ResponseMeta.serialize({
+            body: null
+        })
+        t.deepEqual(Object.keys(obj), [])
+        t.end()
+    });
+    t.test("struct prop empty", async (t) => {
+        const obj = await ResponseMeta.serialize({
+            body: {}
+        })
+        t.false(Object.keys(obj).indexOf('body'), -1)
+        t.end()
+    });
+});
+
 
 const importingPkg = new Metadata.Package(
     'specularJS', 'importing',
