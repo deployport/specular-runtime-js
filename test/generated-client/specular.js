@@ -42,6 +42,16 @@ new Metadata.Property(BodyMeta, "contentLengthUint64Nullable", {
     SubType: "builtin",
     Builtin: "uint64"
 });
+new Metadata.Property(BodyMeta, "createdAt", {
+    NonNullable: true,
+    SubType: "builtin",
+    Builtin: "time"
+});
+new Metadata.Property(BodyMeta, "createdAtNullable", {
+    NonNullable: false,
+    SubType: "builtin",
+    Builtin: "time"
+});
 new Metadata.Property(BodyMeta, "messageString", {
     NonNullable: true,
     SubType: "builtin",

@@ -12,6 +12,8 @@ struct Body {
     contentLengthUint64Nullable: uint64!
     messageString: string!
     messageStringNullable: string
+    createdAt: time!
+    createdAtNullable: time
 }
 
 struct Response {

@@ -6,6 +6,7 @@ import UserDefinedType from "./userDefinedType.js";
 import { TypeRef, isIntegral } from "./typeRef.js";
 import Enum from "./enum.js";
 import { BlobToBase64, ParseOptionalBinary } from "../runtime/builtin.js";
+import { dateIsZeroTime, defaultZeroTime } from "./builtin.js";
 
 export class StructPath {
     readonly module: PackagePath;
@@ -132,12 +133,18 @@ async function serializeToJSON(typeRef: TypeRef, value: any): Promise<any> {
                 return value;
             }
             if (typeRef.Builtin === "time") {
+                if (!(value instanceof Date)) {
+                    throw new Error(`expected Date, got ${value}`);
+                }
+                const dt = value;
+                if (dateIsZeroTime(dt)) {
+                    return undefined;
+                }
                 return value.toISOString();
             } else if (typeRef.Builtin == 'binary') {
                 return await BlobToBase64(value);
             }
             throw new Error(`unexpected type ref builtin ${typeRef.Builtin}`);
-            break;
         case "userDefined":
             if (typeRef.Type instanceof Struct) {
                 if (value === null || value === undefined) {
@@ -159,7 +166,6 @@ async function serializeToJSON(typeRef: TypeRef, value: any): Promise<any> {
             }
             return await Promise.all(value.map((v: any) => serializeToJSON(typeRef.Item, v)));
     }
-    return value;
 }
 
 function deserializeFromJSON(typeRef: TypeRef, value: any): any {
@@ -179,9 +185,10 @@ function deserializeFromJSON(typeRef: TypeRef, value: any): any {
                 }
                 return value;
             } else if (typeRef.Builtin === "time") {
+                if (value === undefined) {
+                    return typeRef.NonNullable ? defaultZeroTime() : null;
+                }
                 return new Date(value);
-            } else if (typeRef.Builtin == 'binary') {
-                return ParseOptionalBinary(value);
             } else if (typeRef.Builtin === 'string') {
                 if (value === undefined) {
                     return typeRef.NonNullable ? '' : null;
@@ -190,6 +197,8 @@ function deserializeFromJSON(typeRef: TypeRef, value: any): any {
                     throw new Error(`expected string, got ${typeof value}`);
                 }
                 return value;
+            } else if (typeRef.Builtin == 'binary') {
+                return ParseOptionalBinary(value);
             }
             break;
         case "userDefined":

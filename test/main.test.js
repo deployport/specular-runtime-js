@@ -4,6 +4,7 @@ import {
     Metadata,
 } from '../lib/index.js';
 import { StructPath } from '../lib/metadata/struct.js';
+import { defaultZeroTime } from '../lib/metadata/builtin.js';
 
 const _pkg = SpecularPackage();
 
@@ -31,6 +32,8 @@ test('Deserialize with builtins props', (t) => {
         t.equal(s.body.contentLengthUint64, 0);
         t.equal(s.body.messageString, "");
         t.equal(s.body.messageStringNullable, null);
+        t.deepEqual(s.body.createdAt, defaultZeroTime());
+        t.deepEqual(s.body.createdAtNullable, null);
         t.end();
     });
     t.test("value", (t) => {
@@ -40,6 +43,7 @@ test('Deserialize with builtins props', (t) => {
                 "contentLengthFloat64Nullable": 64,
                 "messageString": "msg",
                 "messageStringNullable": "msg nullable",
+                "createdAtNullable": "2024-06-18T02:02:07.602Z",
             }
         };
         const s = _pkg.requireBuildFromJSON(ResponseMeta.path, obj);
@@ -48,6 +52,7 @@ test('Deserialize with builtins props', (t) => {
         t.equal(s.body.contentLengthFloat64Nullable, 64);
         t.equal(s.body.messageString, "msg");
         t.equal(s.body.messageStringNullable, "msg nullable");
+        t.same(s.body.createdAtNullable, new Date('2024-06-18T02:02:07.602Z'));
         t.end();
     });
 });
@@ -101,7 +106,6 @@ test('Serialize with builtin props', (t) => {
     t.test("custom value", async (t) => {
         const obj = await BodyMeta.serialize({
             contentLengthInt32: 32,
-            contentLengthFloat64Nullable: null,
             contentLengthUint64Nullable: 64,
             messageString: 'msg',
         })
@@ -111,6 +115,50 @@ test('Serialize with builtin props', (t) => {
         t.equal(obj.contentLengthInt32, 32);
         t.equal(obj.contentLengthUint64Nullable, 64);
         t.equal(obj.messageString, 'msg');
+        t.end()
+    });
+    t.test("nulls", async (t) => {
+        const obj = await BodyMeta.serialize({
+            contentLengthFloat64Nullable: null,
+        })
+        const props = Object.keys(obj);
+        t.false(props.includes('contentLengthFloat64Nullable'), 'should not include default nullable null')
+        t.end()
+    });
+    t.test("default null", async (t) => {
+        const obj = await BodyMeta.serialize({
+            messageStringNullable: null,
+        })
+        const props = Object.keys(obj);
+        t.false(props.includes('messageStringNullable'))
+        t.end()
+    });
+    t.test("nullable set", async (t) => {
+        const obj = await BodyMeta.serialize({
+            messageStringNullable: 'val',
+        })
+        const props = Object.keys(obj);
+        t.true(props.includes('messageStringNullable'))
+        t.equal(obj.messageStringNullable, 'val')
+        t.end()
+    });
+    t.test("time default", async (t) => {
+        const obj = await BodyMeta.serialize({
+            createdAt: defaultZeroTime(),
+        })
+        const props = Object.keys(obj);
+        t.false(props.includes('createdAt'), 'should not include date since is default date zero value')
+        t.deepEqual(props, []);
+        t.end()
+    });
+    t.test("time custom", async (t) => {
+        const obj = await BodyMeta.serialize({
+            createdAt: new Date(Date.UTC(2024, 1, 1)),
+        })
+        const props = Object.keys(obj);
+        t.true(props.includes('createdAt'))
+        t.deepEqual(props, ['createdAt']);
+        t.equal(obj.createdAt, '2024-02-01T00:00:00.000Z');
         t.end()
     });
 });

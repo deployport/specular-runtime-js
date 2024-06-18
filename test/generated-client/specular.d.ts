@@ -9,6 +9,8 @@ export interface BodyProperties {
     contentLengthUint32: number;
     contentLengthUint64: number;
     contentLengthUint64Nullable: number;
+    createdAt: Date;
+    createdAtNullable: Date | null;
     messageString: string;
     messageStringNullable: string | null;
 }

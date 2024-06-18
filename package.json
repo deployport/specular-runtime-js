@@ -18,7 +18,7 @@
     "prepare": "npm run build",
     "clean": "rm -rf lib",
     "lint": "eslint . --ext .ts",
-    "test": "npm run build && node test/Hydrate.test.js && npm run lint",
+    "test": "npm run build && npm run lint && tape test/main.test.js",
     "test-gen": "cd test && specular-standalone-compiler generate"
   },
   "devDependencies": {
