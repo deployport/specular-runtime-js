@@ -8,6 +8,7 @@ export interface BodyProperties {
     contentLengthInt64: number;
     contentLengthUint32: number;
     contentLengthUint64: number;
+    contentLengthUint64Nullable: number;
     messageString: string;
     messageStringNullable: string | null;
 }

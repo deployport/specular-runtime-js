@@ -9,6 +9,7 @@ struct Body {
     contentLengthFloat64Nullable: float64
     contentLengthUint32: uint32!
     contentLengthUint64: uint64!
+    contentLengthUint64Nullable: uint64!
     messageString: string!
     messageStringNullable: string
 }

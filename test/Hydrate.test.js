@@ -1,5 +1,5 @@
 import test from 'tape';
-import { SpecularPackage, ResponseMeta } from './generated-client/specular.js';
+import { SpecularPackage, ResponseMeta, BodyMeta } from './generated-client/specular.js';
 import {
     Metadata,
 } from '../lib/index.js';
@@ -92,6 +92,28 @@ test('Serialize with struct props', (t) => {
     });
 });
 
+test('Serialize with builtin props', (t) => {
+    t.test("missing", async (t) => {
+        const obj = await BodyMeta.serialize({})
+        t.deepEqual(Object.keys(obj), [])
+        t.end()
+    });
+    t.test("custom value", async (t) => {
+        const obj = await BodyMeta.serialize({
+            contentLengthInt32: 32,
+            contentLengthFloat64Nullable: null,
+            contentLengthUint64Nullable: 64,
+            messageString: 'msg',
+        })
+        const props = Object.keys(obj);
+        t.true(props.includes('contentLengthInt32'))
+        t.false(props.includes('contentLengthFloat64Nullable'), 'should not include default nullable null')
+        t.equal(obj.contentLengthInt32, 32);
+        t.equal(obj.contentLengthUint64Nullable, 64);
+        t.equal(obj.messageString, 'msg');
+        t.end()
+    });
+});
 
 const importingPkg = new Metadata.Package(
     'specularJS', 'importing',

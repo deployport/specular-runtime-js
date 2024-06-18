@@ -113,12 +113,30 @@ export default class Struct implements UserDefinedType {
 async function serializeToJSON(typeRef: TypeRef, value: any): Promise<any> {
     switch (typeRef.SubType) {
         case "builtin":
+            if (value === null && !typeRef.NonNullable) {
+                return undefined;
+            }
+            if (value === undefined) {
+                return undefined;
+            }
+            if (isIntegral(typeRef.Builtin)) {
+                if (value === 0) {
+                    return undefined;
+                }
+                return value;
+            }
+            if (typeRef.Builtin === 'string') {
+                if (value === '') {
+                    return undefined;
+                }
+                return value;
+            }
             if (typeRef.Builtin === "time") {
                 return value.toISOString();
-            }
-            else if (typeRef.Builtin == 'binary') {
+            } else if (typeRef.Builtin == 'binary') {
                 return await BlobToBase64(value);
             }
+            throw new Error(`unexpected type ref builtin ${typeRef.Builtin}`);
             break;
         case "userDefined":
             if (typeRef.Type instanceof Struct) {
