@@ -63,6 +63,16 @@ NonNullable: false,
 SubType: "builtin",
 Builtin: "time"
 });
+new Metadata.Property(BodyMeta, "fileData", {
+NonNullable: true,
+SubType: "builtin",
+Builtin: "binary"
+});
+new Metadata.Property(BodyMeta, "fileDataNullable", {
+NonNullable: false,
+SubType: "builtin",
+Builtin: "binary"
+});
 new Metadata.Property(BodyMeta, "messageString", {
 NonNullable: true,
 SubType: "builtin",
@@ -89,6 +99,8 @@ export interface BodyProperties {
     contentLengthUint64Nullable : number
     createdAt : Date
     createdAtNullable : Date| null
+    fileData : Blob
+    fileDataNullable : Blob| null
     messageString : string
     messageStringNullable : string| null
 }

@@ -34,6 +34,10 @@ test('Deserialize with builtins props', (t) => {
         t.equal(s.body.messageStringNullable, null);
         t.deepEqual(s.body.createdAt, defaultZeroTime());
         t.deepEqual(s.body.createdAtNullable, null);
+        t.notEqual(s.body.fileData, null);
+        t.equal(typeof s.body.fileData, 'object');
+        t.equal(s.body.fileData.constructor, Blob);
+        t.equal(s.body.fileDataNullable, null);
         t.end();
     });
     t.test("value", (t) => {

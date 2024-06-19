@@ -11,6 +11,8 @@ export interface BodyProperties {
     contentLengthUint64Nullable: number;
     createdAt: Date;
     createdAtNullable: Date | null;
+    fileData: Blob;
+    fileDataNullable: Blob | null;
     messageString: string;
     messageStringNullable: string | null;
 }

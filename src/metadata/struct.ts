@@ -198,6 +198,9 @@ function deserializeFromJSON(typeRef: TypeRef, value: any): any {
                 }
                 return value;
             } else if (typeRef.Builtin == 'binary') {
+                if (value === undefined) {
+                    return typeRef.NonNullable ? new Blob([]) : null;
+                }
                 return ParseOptionalBinary(value);
             }
             break;

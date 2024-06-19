@@ -14,6 +14,8 @@ struct Body {
     messageStringNullable: string
     createdAt: time!
     createdAtNullable: time
+    fileData: binary!
+    fileDataNullable: binary
 }
 
 struct Response {

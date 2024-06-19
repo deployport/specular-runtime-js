@@ -52,6 +52,16 @@ new Metadata.Property(BodyMeta, "createdAtNullable", {
     SubType: "builtin",
     Builtin: "time"
 });
+new Metadata.Property(BodyMeta, "fileData", {
+    NonNullable: true,
+    SubType: "builtin",
+    Builtin: "binary"
+});
+new Metadata.Property(BodyMeta, "fileDataNullable", {
+    NonNullable: false,
+    SubType: "builtin",
+    Builtin: "binary"
+});
 new Metadata.Property(BodyMeta, "messageString", {
     NonNullable: true,
     SubType: "builtin",
