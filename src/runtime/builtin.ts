@@ -48,9 +48,6 @@ export function ParseRequiredBinary(maybeStringBase64: any): Blob {
  * @returns 
  */
 export function ParseOptionalBinary(maybeStringBase64: any): Blob | null {
-    if (!maybeStringBase64) {
-        return null;
-    }
     if (typeof maybeStringBase64 !== 'string') {
         throw new Error(`Cannot parse blob from ${typeof maybeStringBase64}(${maybeStringBase64})`);
     }

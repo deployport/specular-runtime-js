@@ -5,6 +5,7 @@ import {
 } from '../lib/index.js';
 import { StructPath } from '../lib/metadata/struct.js';
 import { defaultZeroTime } from '../lib/metadata/builtin.js';
+import { BlobToBase64 } from '../lib/runtime/builtin.js';
 
 const _pkg = SpecularPackage();
 
@@ -48,6 +49,7 @@ test('Deserialize with builtins props', (t) => {
                 "messageString": "msg",
                 "messageStringNullable": "msg nullable",
                 "createdAtNullable": "2024-06-18T02:02:07.602Z",
+                "fileData": "",
             }
         };
         const s = _pkg.requireBuildFromJSON(ResponseMeta.path, obj);
@@ -57,9 +59,58 @@ test('Deserialize with builtins props', (t) => {
         t.equal(s.body.messageString, "msg");
         t.equal(s.body.messageStringNullable, "msg nullable");
         t.same(s.body.createdAtNullable, new Date('2024-06-18T02:02:07.602Z'));
+        t.same(s.body.fileData, new Blob([]));
+        t.end();
+    });
+    t.test("value binary", async (t) => {
+        const obj = {
+            "body": {
+                "fileData": await BlobToBase64(new Blob(['hi'], { type: "text/plain" })),
+            }
+        };
+        const s = _pkg.requireBuildFromJSON(ResponseMeta.path, obj);
+        t.notEqual(s.body, null);
+        t.notEqual(s.body.fileData, null);
+        t.true(areArrayBuffersEqual(await s.body.fileData.arrayBuffer(), await new Blob(['hi'], { type: "text/plain" }).arrayBuffer()));
+        t.end();
+    });
+    t.test("nullable binary null", async (t) => {
+        const obj = {
+            "body": {
+                "fileDataNullable": null,
+            }
+        };
+        const s = _pkg.requireBuildFromJSON(ResponseMeta.path, obj);
+        t.notEqual(s.body, null);
+        t.equal(s.body.fileDataNullable, null);
+        t.end();
+    });
+    t.test("nullable binary value", async (t) => {
+        const obj = {
+            "body": {
+                "fileDataNullable": await BlobToBase64(new Blob(['hi'], { type: "text/plain" })),
+            }
+        };
+        const s = _pkg.requireBuildFromJSON(ResponseMeta.path, obj);
+        t.notEqual(s.body, null);
+        t.notEqual(s.body.fileDataNullable, null);
+        t.true(areArrayBuffersEqual(await s.body.fileDataNullable.arrayBuffer(), await new Blob(['hi'], { type: "text/plain" }).arrayBuffer()));
         t.end();
     });
 });
+
+function areArrayBuffersEqual(buffer1, buffer2) {
+    if (buffer1.byteLength !== buffer2.byteLength) return false;
+
+    const view1 = new Uint8Array(buffer1);
+    const view2 = new Uint8Array(buffer2);
+
+    for (let i = 0; i < view1.length; i++) {
+        if (view1[i] !== view2[i]) return false;
+    }
+
+    return true;
+}
 
 test('Deserialize with struct props', (t) => {
     t.test("null field", (t) => {
