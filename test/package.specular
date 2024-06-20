@@ -1,6 +1,11 @@
 @specular:Endpoint(base="http://localhost:8080")
 service package specularjs/testpackage
 
+enum BodyType{
+    Normal="normal"
+    Special="special"
+}
+
 struct Body {
     contentLengthInt32: int32!
     contentLengthInt64: int64!
@@ -16,6 +21,8 @@ struct Body {
     createdAtNullable: time
     fileData: binary!
     fileDataNullable: binary
+    bodyType: BodyType!
+    bodyTypeNullable: BodyType
 }
 
 struct Response {

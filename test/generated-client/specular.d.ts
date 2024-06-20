@@ -1,6 +1,13 @@
 import { Runtime, Metadata } from '../../lib/index.js';
+export declare const BodyTypeMeta: Metadata.Enum;
+export declare enum BodyType {
+    Normal = "normal",
+    Special = "special"
+}
 export declare const BodyMeta: Metadata.Struct;
 export interface BodyProperties {
+    bodyType: BodyType;
+    bodyTypeNullable: BodyType | null;
     contentLengthFloat32: number;
     contentLengthFloat64: number;
     contentLengthFloat64Nullable: number | null;

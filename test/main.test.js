@@ -1,5 +1,5 @@
 import test from 'tape';
-import { SpecularPackage, ResponseMeta, BodyMeta } from './generated-client/specular.js';
+import { SpecularPackage, ResponseMeta, BodyMeta, BodyType } from './generated-client/specular.js';
 import {
     Metadata,
 } from '../lib/index.js';
@@ -39,6 +39,8 @@ test('Deserialize with builtins props', (t) => {
         t.equal(typeof s.body.fileData, 'object');
         t.equal(s.body.fileData.constructor, Blob);
         t.equal(s.body.fileDataNullable, null);
+        t.equal(s.body.bodyType, BodyType.Normal, "default enum value when missing");
+        t.equal(s.body.bodyTypeNullable, null);
         t.end();
     });
     t.test("value", (t) => {
@@ -50,6 +52,8 @@ test('Deserialize with builtins props', (t) => {
                 "messageStringNullable": "msg nullable",
                 "createdAtNullable": "2024-06-18T02:02:07.602Z",
                 "fileData": "",
+                "bodyType": "special",
+                "bodyTypeNullable": "special"
             }
         };
         const s = _pkg.requireBuildFromJSON(ResponseMeta.path, obj);
@@ -60,6 +64,8 @@ test('Deserialize with builtins props', (t) => {
         t.equal(s.body.messageStringNullable, "msg nullable");
         t.same(s.body.createdAtNullable, new Date('2024-06-18T02:02:07.602Z'));
         t.same(s.body.fileData, new Blob([]));
+        t.equal(s.body.bodyType, BodyType.Special);
+        t.equal(s.body.bodyTypeNullable, BodyType.Special);
         t.end();
     });
     t.test("value binary", async (t) => {

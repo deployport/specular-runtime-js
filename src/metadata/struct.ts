@@ -211,16 +211,18 @@ function deserializeFromJSON(typeRef: TypeRef, value: any): any {
             }
             break;
         case "userDefined":
-            if (value === null || value === undefined) {
-                return null;
-            }
             if (typeRef.Type instanceof Struct) {
+                if (value === null || value === undefined) {
+                    return null;
+                }
                 if (value === null) {
                     return null;
                 }
                 return typeRef.Type.package.requireBuildFromJSON(typeRef.Type.path, value);
             } else if (typeRef.Type instanceof Enum) {
-                // TODO: validate enum value
+                if (value === undefined) {
+                    return typeRef.NonNullable ? typeRef.Type.defaultConstant : null;
+                }
                 return value;
             } else {
                 throw new Error(`unexpected type ref user defined ${typeRef}`);

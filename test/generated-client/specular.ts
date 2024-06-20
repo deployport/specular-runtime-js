@@ -9,10 +9,33 @@ const _pkg = new Metadata.Package(
     "testpackage",
 );
 
+// BodyType entity
+export const BodyTypeMeta = new Metadata.Enum(
+    _pkg,
+     "BodyType", 
+     [
+        "normal",
+        "special",
+     ]
+);
+export enum BodyType {
+    Normal = "normal",
+    Special = "special",
+}
 export const BodyMeta = new Metadata.Struct(
     _pkg, 
     "Body", 
 );
+new Metadata.Property(BodyMeta, "bodyType", {
+NonNullable: true,
+SubType: "userDefined",
+Type: SpecularPackage().requireTypeByName("BodyType")
+});
+new Metadata.Property(BodyMeta, "bodyTypeNullable", {
+NonNullable: false,
+SubType: "userDefined",
+Type: SpecularPackage().requireTypeByName("BodyType")
+});
 new Metadata.Property(BodyMeta, "contentLengthFloat32", {
 NonNullable: true,
 SubType: "builtin",
@@ -89,6 +112,8 @@ export interface BodyProperties {
     // * Returns "specularjs/testpackage.Body"
     // */
     // fqtn: "specularjs/testpackage.Body";
+    bodyType : BodyType
+    bodyTypeNullable : BodyType| null
     contentLengthFloat32 : number
     contentLengthFloat64 : number
     contentLengthFloat64Nullable : number| null

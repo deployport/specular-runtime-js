@@ -1,7 +1,27 @@
 // JS gen package
 import { Runtime, Metadata, } from '../../lib/index.js';
 const _pkg = new Metadata.Package("specularjs", "testpackage");
+// BodyType entity
+export const BodyTypeMeta = new Metadata.Enum(_pkg, "BodyType", [
+    "normal",
+    "special",
+]);
+export var BodyType;
+(function (BodyType) {
+    BodyType["Normal"] = "normal";
+    BodyType["Special"] = "special";
+})(BodyType || (BodyType = {}));
 export const BodyMeta = new Metadata.Struct(_pkg, "Body");
+new Metadata.Property(BodyMeta, "bodyType", {
+    NonNullable: true,
+    SubType: "userDefined",
+    Type: SpecularPackage().requireTypeByName("BodyType")
+});
+new Metadata.Property(BodyMeta, "bodyTypeNullable", {
+    NonNullable: false,
+    SubType: "userDefined",
+    Type: SpecularPackage().requireTypeByName("BodyType")
+});
 new Metadata.Property(BodyMeta, "contentLengthFloat32", {
     NonNullable: true,
     SubType: "builtin",
