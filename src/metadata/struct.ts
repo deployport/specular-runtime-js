@@ -158,7 +158,15 @@ async function serializeToJSON(typeRef: TypeRef, value: any): Promise<any> {
                 }
                 return await typeRef.Type.serialize(value);
             } else if (typeRef.Type instanceof Enum) {
-                // TODO: validate enum value
+                if (value === null && !typeRef.NonNullable) {
+                    return undefined;
+                }
+                if (value === undefined) {
+                    return undefined;
+                }
+                if (value === typeRef.Type.defaultConstant) {
+                    return undefined;
+                }
                 return value;
             } else {
                 throw new Error(`unexpected type ref user defined ${typeRef}`);

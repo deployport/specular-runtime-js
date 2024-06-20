@@ -180,29 +180,27 @@ test('Serialize with builtin props', (t) => {
     });
     t.test("nulls", async (t) => {
         const obj = await BodyMeta.serialize({
+            messageStringNullable: null,
             contentLengthFloat64Nullable: null,
             fileDataNullable: null,
-        })
-        const props = Object.keys(obj);
-        t.false(props.includes('contentLengthFloat64Nullable'), 'should not include default nullable null')
-        t.false(props.includes('fileDataNullable'), 'should not include default nullable null')
-        t.end()
-    });
-    t.test("default null", async (t) => {
-        const obj = await BodyMeta.serialize({
-            messageStringNullable: null,
+            bodyTypeNullable: null,
         })
         const props = Object.keys(obj);
         t.false(props.includes('messageStringNullable'))
+        t.false(props.includes('contentLengthFloat64Nullable'), 'should not include default nullable null')
+        t.false(props.includes('fileDataNullable'), 'should not include default nullable null')
+        t.false(props.includes('bodyTypeNullable'), 'should not include default nullable null')
         t.end()
     });
     t.test("nullable set", async (t) => {
         const obj = await BodyMeta.serialize({
             messageStringNullable: 'val',
+            bodyTypeNullable: 'special',
         })
         const props = Object.keys(obj);
         t.true(props.includes('messageStringNullable'))
         t.equal(obj.messageStringNullable, 'val')
+        t.equal(obj.bodyTypeNullable, 'special')
         t.end()
     });
     t.test("time default", async (t) => {
@@ -242,6 +240,15 @@ test('Serialize with builtin props', (t) => {
         t.true(props.includes('fileData'))
         t.equal(obj.fileData, 'aGk=');
         t.equal(obj.fileDataNullable, 'aGk=');
+        t.end()
+    });
+    t.test("enum default", async (t) => {
+        const obj = await BodyMeta.serialize({
+            bodyType: BodyType.Normal,
+        })
+        const props = Object.keys(obj);
+        t.false(props.includes('bodyType'), 'should not include since default value was set')
+        t.deepEqual(props, []);
         t.end()
     });
 });
