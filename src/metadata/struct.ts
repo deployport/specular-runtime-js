@@ -142,6 +142,12 @@ async function serializeToJSON(typeRef: TypeRef, value: any): Promise<any> {
                 }
                 return value.toISOString();
             } else if (typeRef.Builtin == 'binary') {
+                if (!(value instanceof Blob)) {
+                    throw new Error(`expected Blob, got ${value}`);
+                }
+                if (value.size === 0) {
+                    return undefined;
+                }
                 return await BlobToBase64(value);
             }
             throw new Error(`unexpected type ref builtin ${typeRef.Builtin}`);

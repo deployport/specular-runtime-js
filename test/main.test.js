@@ -175,9 +175,11 @@ test('Serialize with builtin props', (t) => {
     t.test("nulls", async (t) => {
         const obj = await BodyMeta.serialize({
             contentLengthFloat64Nullable: null,
+            fileDataNullable: null,
         })
         const props = Object.keys(obj);
         t.false(props.includes('contentLengthFloat64Nullable'), 'should not include default nullable null')
+        t.false(props.includes('fileDataNullable'), 'should not include default nullable null')
         t.end()
     });
     t.test("default null", async (t) => {
@@ -214,6 +216,26 @@ test('Serialize with builtin props', (t) => {
         t.true(props.includes('createdAt'))
         t.deepEqual(props, ['createdAt']);
         t.equal(obj.createdAt, '2024-02-01T00:00:00.000Z');
+        t.end()
+    });
+    t.test("binary default", async (t) => {
+        const obj = await BodyMeta.serialize({
+            fileData: new Blob([''], { type: "text/plain" }),
+        })
+        const props = Object.keys(obj);
+        t.false(props.includes('fileData'), 'should not include date since is default binary is an empty string')
+        t.deepEqual(props, []);
+        t.end()
+    });
+    t.test("binary value", async (t) => {
+        const obj = await BodyMeta.serialize({
+            fileData: new Blob(['hi'], { type: "text/plain" }),
+            fileDataNullable: new Blob(['hi'], { type: "text/plain" }),
+        })
+        const props = Object.keys(obj);
+        t.true(props.includes('fileData'))
+        t.equal(obj.fileData, 'aGk=');
+        t.equal(obj.fileDataNullable, 'aGk=');
         t.end()
     });
 });
