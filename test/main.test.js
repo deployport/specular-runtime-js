@@ -1,11 +1,14 @@
 import test from 'tape';
-import { SpecularPackage, ResponseMeta, BodyMeta, BodyType } from './generated-client/specular.js';
+import { SpecularPackage, ResponseMeta, BodyMeta, BodyType, NotFoundProblem, NotFoundProblemMeta } from './generated-client/specular.js';
 import {
     Metadata,
 } from '../lib/index.js';
 import { StructPath } from '../lib/metadata/struct.js';
 import { defaultZeroTime } from '../lib/metadata/builtin.js';
 import { BlobToBase64 } from '../lib/runtime/builtin.js';
+import { parseHTTPResult } from '../lib/runtime/client.js';
+import { RpcError, UnknownRpcError } from '../lib/runtime/error.js';
+import { TypeNotFoundError } from '../lib/metadata/package.js';
 
 const _pkg = SpecularPackage();
 
@@ -279,5 +282,59 @@ test('unmatched case instantiation', (t) => {
     const sp = StructPath.fromString(ResponseMeta.path.mediaType.toUpperCase());
     const s = _pkg.requireBuildFromJSON(sp, obj);
     t.equal(s.body, null);
+    t.end();
+});
+
+test('unknown error type degrades to UnknownRpcError', async (t) => {
+    const ct = 'application/spec.myns.mymod.futureproblem+json; kind=error';
+    try {
+        await parseHTTPResult(_pkg, ct, async () => ({ message: 'quota exceeded', code: 'QUOTA', limit: 100 }));
+        t.fail('expected parseHTTPResult to throw');
+    } catch (e) {
+        t.ok(e instanceof UnknownRpcError, 'is UnknownRpcError');
+        t.ok(e instanceof RpcError, 'is RpcError');
+        t.ok(e instanceof Error, 'is Error');
+        t.equal(e.message, 'quota exceeded');
+        t.equal(e.code, 'QUOTA');
+        t.equal(e.typeName, 'application/spec.myns.mymod.futureproblem');
+        t.deepEqual(e.payload, { message: 'quota exceeded', code: 'QUOTA', limit: 100 });
+    }
+    t.end();
+});
+
+test('deserialized struct preserves its prototype (buildByFQTN does not flatten)', (t) => {
+    const r = _pkg.requireBuildFromJSON(NotFoundProblemMeta.path, { message: 'boom', status: 1 });
+    t.ok(r instanceof NotFoundProblem, 'instance keeps its NotFoundProblem prototype');
+    t.ok(r instanceof Error, 'instance is a real Error');
+    t.equal(r.message, 'boom', 'message preserved');
+    t.equal(r.status, 1);
+    t.equal(r.__structPath, NotFoundProblemMeta.path, '__structPath preserved');
+    t.end();
+});
+
+test('user-defined error is thrown (not returned) as a real Error', async (t) => {
+    const ct = NotFoundProblemMeta.path.mediaType + '+json; kind=error';
+    try {
+        await parseHTTPResult(_pkg, ct, async () => ({ message: 'not found', detail: 'x', status: 404, title: 'NF' }));
+        t.fail('expected parseHTTPResult to throw the user-defined error');
+    } catch (e) {
+        t.ok(e instanceof Error, 'thrown value is a real Error');
+        t.ok(e instanceof NotFoundProblem, 'thrown value is a NotFoundProblem instance');
+        t.equal(e.message, 'not found', 'message preserved');
+        t.equal(e.detail, 'x');
+        t.equal(e.status, 404);
+    }
+    t.end();
+});
+
+test('unknown type without kind=error stays a TypeNotFoundError', async (t) => {
+    const ct = 'application/spec.myns.mymod.futureoutput+json';
+    try {
+        await parseHTTPResult(_pkg, ct, async () => ({ id: '1' }));
+        t.fail('expected parseHTTPResult to throw');
+    } catch (e) {
+        t.notOk(e instanceof UnknownRpcError, 'not UnknownRpcError');
+        t.ok(e instanceof TypeNotFoundError, 'is TypeNotFoundError');
+    }
     t.end();
 });

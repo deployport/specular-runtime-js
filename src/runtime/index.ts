@@ -3,3 +3,4 @@ export { Struct, HydrateContext, StructInterface } from './struct.js';
 export { default as Content, CreateContentFromObject, CreateContentObjectArray } from './content.js';
 export { ParseTime, RequireParseTime, ParseRequiredBinary, ParseOptionalBinary, BlobToBase64 } from './builtin.js';
 export { StreamMultipartMixedChunks, HTTPRequest, HTTPHeaders } from './http.js';
+export { RpcError, UnknownRpcError } from './error.js';

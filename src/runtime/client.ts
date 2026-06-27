@@ -4,6 +4,7 @@ import Package, { TypeNotFoundError } from "../metadata/package.js";
 import { StructPath } from "../metadata/struct.js";
 import { Properties } from "./content.js";
 import { HTTPRequest, Part, StreamMultipartMixedChunks } from "./http.js";
+import { UnknownRpcError } from "./error.js";
 import { GenericProperties, Struct } from "./struct.js";
 
 const builtinMeta = BuiltinMeta();
@@ -14,12 +15,34 @@ function newHttpErrorException(err: Struct): Error {
 
 const contentTypeFormat = "+json"
 
-const cleanHTTPContentTypeFormat = (contentType: string): string => {
-    const idx = contentType.indexOf(contentTypeFormat);
-    if (idx === -1) {
-        return contentType;
+interface ParsedContentType {
+    /** The media type with the `+json` suffix and any params stripped. */
+    mediaType: string;
+    /** Lower-cased media-type parameters keyed by name (e.g. `kind`). */
+    params: Record<string, string>;
+}
+
+/**
+ * parseContentType splits a Content-Type into its media type (with the
+ * `+json` suffix stripped) and its lower-cased media-type parameters, e.g.
+ * `application/spec.ns.mod.type+json; kind=error` →
+ * `{ mediaType: "application/spec.ns.mod.type", params: { kind: "error" } }`.
+ * The envelope's `kind` param is authoritative for whether a response is an error.
+ */
+const parseContentType = (contentType: string): ParsedContentType => {
+    const [base = "", ...rawParams] = contentType.split(";");
+    const idx = base.indexOf(contentTypeFormat);
+    const mediaType = (idx === -1 ? base : base.substring(0, idx)).trim();
+    const params: Record<string, string> = {};
+    for (const param of rawParams) {
+        const eq = param.indexOf("=");
+        if (eq === -1) {
+            continue;
+        }
+        const key = param.slice(0, eq).trim().toLowerCase();
+        params[key] = param.slice(eq + 1).trim().replace(/['"]/g, "").toLowerCase();
     }
-    return contentType.substring(0, idx);
+    return { mediaType, params };
 }
 
 function multirequireBuildFromJSON(pk: Package, mediaType: StructPath, json: Properties): Struct | Error {
@@ -33,11 +56,25 @@ function multirequireBuildFromJSON(pk: Package, mediaType: StructPath, json: Pro
     }
 }
 
-async function parseHTTPResult(pkg: Package, contentType: string, parseBody: () => Promise<any>): Promise<Struct> {
+export async function parseHTTPResult(pkg: Package, contentType: string, parseBody: () => Promise<any>): Promise<Struct> {
+    const { mediaType: cleanType, params } = parseContentType(contentType);
+    const isError = params.kind === "error";
     const outputJSON = await parseBody() as Properties;
-    const mediaType = StructPath.fromString(cleanHTTPContentTypeFormat(contentType));
-    const responseStruct = multirequireBuildFromJSON(pkg, mediaType, outputJSON);
-    if (responseStruct instanceof Error) {
+    const mediaType = StructPath.fromString(cleanType);
+    let responseStruct: Struct | Error;
+    try {
+        responseStruct = multirequireBuildFromJSON(pkg, mediaType, outputJSON);
+    } catch (e) {
+        // An error envelope whose type this client was not generated with must
+        // still surface as an error, never as a decode failure.
+        if (isError && e instanceof TypeNotFoundError) {
+            throw new UnknownRpcError(mediaType.mediaType, outputJSON);
+        }
+        throw e;
+    }
+    // The envelope is authoritative: a `kind=error` response is always thrown,
+    // even if the decoded struct's prototype does not extend Error.
+    if (isError || responseStruct instanceof Error) {
         throw responseStruct;
     }
     return responseStruct;

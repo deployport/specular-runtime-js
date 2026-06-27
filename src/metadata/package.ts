@@ -122,10 +122,16 @@ export default class Package {
 
     buildByFQTN(structPath: StructPath, content: Content): RuntimeStruct {
         const structMeta = this.structByFQTN(structPath);
-        const struct = {
-            ...structMeta.deserialize(content),
-            __structPath: structPath,
-        } as RuntimeStruct;
+        // Preserve the deserialized struct's prototype. Spreading it into a new
+        // object ({ ...struct }) would flatten the instance into a plain object,
+        // stripping the Error/RpcError prototype of error structs (so they would
+        // be returned as results instead of thrown) and dropping non-enumerable
+        // fields like Error.message. Error/builtin classes expose __structPath
+        // via a getter; only plain output structs need it injected.
+        const struct = structMeta.deserialize(content) as RuntimeStruct & { __structPath?: StructPath };
+        if (struct.__structPath === undefined) {
+            struct.__structPath = structMeta.path;
+        }
         return struct;
     }
 
