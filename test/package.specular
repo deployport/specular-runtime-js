@@ -1,5 +1,5 @@
 @specular:Endpoint(base="http://localhost:8080")
-service package specularjs/testpackage
+service package
 
 enum BodyType{
     Normal="normal"

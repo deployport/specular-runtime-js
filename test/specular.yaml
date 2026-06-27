@@ -2,12 +2,12 @@ packages:
   - origin: "file://package.specular"
     version: 0.0.1
     path:
-      project: testpackage
-      workspace: specularjs
+      module: testpackage
+      namespace: specularjs
     generate:
       - language: js
         client:
           output: ./generated-client
           options:
             _skipJS: true
-            specularRuntimeImport: "../../lib/index.js"
+            specularRuntimeImport: "../.."

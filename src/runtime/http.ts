@@ -39,7 +39,7 @@ export async function StreamMultipartMixedChunks(httpResponse: any, callback: St
 
     while (running) {
         const { value, done } = await iterator.next();
-        const chunk = typeof value === "string" ? value : decoder.decode(value);
+        const chunk = typeof value === "string" ? value : decoder.decode(value as Uint8Array);
         const searchFrom = buffer.length - boundary.length + 1;
         running = !done;
         buffer += chunk;
@@ -108,7 +108,7 @@ export class HTTPRequest {
     }
 
     async fetch(): Promise<Response> {
-        const h: string[][] = [];
+        const h: [string, string][] = [];
         for (const key in this.headers) {
             const val = this.headers[key];
             if (Array.isArray(val)) {

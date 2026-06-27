@@ -105,7 +105,7 @@ export default class Struct implements UserDefinedType {
                 }
                 struct[prop.name] = propVal;
             } catch (e) {
-                throw new Error(`failed to deserialize property '${prop.name}': ${e}`);
+                throw new Error(`failed to deserialize property '${prop.name}': ${e}`, { cause: e });
             }
         }
     }

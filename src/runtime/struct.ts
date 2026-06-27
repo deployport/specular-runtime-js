@@ -21,6 +21,6 @@ export interface StructInterface {
     __structPath: StructPath;
 }
 
-export interface GenericProperties extends ExplicitRecord<any> { }
-export interface SerializedProperties extends ExplicitRecord<any> { }
+export type GenericProperties = ExplicitRecord<any>;
+export type SerializedProperties = ExplicitRecord<any>;
 export type Struct = GenericProperties & StructInterface;

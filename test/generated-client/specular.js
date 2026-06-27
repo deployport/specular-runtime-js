@@ -1,16 +1,24 @@
-// JS gen package
-import { Runtime, Metadata, } from '../../lib/index.js';
+import { Runtime, Metadata, } from '@deployport/specular-runtime';
 const _pkg = new Metadata.Package("specularjs", "testpackage");
-// BodyType entity
+/** Enum metadata
+*/
 export const BodyTypeMeta = new Metadata.Enum(_pkg, "BodyType", [
     "normal",
     "special",
 ]);
+/** enum BodyType
+*/
 export var BodyType;
 (function (BodyType) {
+    /** enum constant Normal
+*/
     BodyType["Normal"] = "normal";
+    /** enum constant Special
+*/
     BodyType["Special"] = "special";
 })(BodyType || (BodyType = {}));
+/** Struct metadata
+*/
 export const BodyMeta = new Metadata.Struct(_pkg, "Body");
 new Metadata.Property(BodyMeta, "bodyType", {
     NonNullable: true,
@@ -92,14 +100,23 @@ new Metadata.Property(BodyMeta, "messageStringNullable", {
     SubType: "builtin",
     Builtin: "string"
 });
+/** Struct metadata
+*/
 export const ResponseMeta = new Metadata.Struct(_pkg, "Response");
 new Metadata.Property(ResponseMeta, "body", {
     NonNullable: false,
     SubType: "userDefined",
     Type: SpecularPackage().requireTypeByName("Body")
 });
+/** Struct metadata
+*/
 export const NotFoundProblemMeta = new Metadata.Struct(_pkg, "NotFoundProblem");
 new Metadata.Property(NotFoundProblemMeta, "detail", {
+    NonNullable: true,
+    SubType: "builtin",
+    Builtin: "string"
+});
+new Metadata.Property(NotFoundProblemMeta, "message", {
     NonNullable: true,
     SubType: "builtin",
     Builtin: "string"
@@ -114,31 +131,39 @@ new Metadata.Property(NotFoundProblemMeta, "title", {
     SubType: "builtin",
     Builtin: "string"
 });
-new Metadata.Property(NotFoundProblemMeta, "message", {
-    NonNullable: true,
-    SubType: "builtin",
-    Builtin: "string"
-});
-export class NotFoundProblem extends Error {
+/** struct NotFoundProblem
+*/
+export class NotFoundProblem extends Runtime.RpcError {
     detail = '';
     status = 0;
     title = '';
-    message = '';
     get __structPath() {
         return NotFoundProblemMeta.path;
     }
 }
 NotFoundProblemMeta.problemInstantiate = (msg) => new NotFoundProblem(msg);
+/** Struct metadata
+*/
 export const TestHTTPGetInputMeta = new Metadata.Struct(_pkg, "TestHTTPGetInput");
+/** Struct metadata
+*/
 export const TestHTTPGetOutputMeta = new Metadata.Struct(_pkg, "TestHTTPGetOutput");
 new Metadata.Property(TestHTTPGetOutputMeta, "response", {
     NonNullable: false,
     SubType: "userDefined",
     Type: SpecularPackage().requireTypeByName("Response")
 });
+/** Struct metadata
+*/
 export const TestHTTPOtherInputMeta = new Metadata.Struct(_pkg, "TestHTTPOtherInput");
+/** Struct metadata
+*/
 export const TestHTTPOtherOutputMeta = new Metadata.Struct(_pkg, "TestHTTPOtherOutput");
+/** Struct metadata
+*/
 export const TestHTTPWatchChangesInputMeta = new Metadata.Struct(_pkg, "TestHTTPWatchChangesInput");
+/** Struct metadata
+*/
 export const TestHTTPWatchChangesOutputMeta = new Metadata.Struct(_pkg, "TestHTTPWatchChangesOutput");
 new Metadata.Property(TestHTTPWatchChangesOutputMeta, "response", {
     NonNullable: false,
@@ -167,20 +192,26 @@ const _testHTTPWatchChangesOperationMeta = new Metadata.Operation({
     input: TestHTTPWatchChangesInputMeta,
     output: TestHTTPWatchChangesOutputMeta,
 });
-// TestHTTPResource is the TestHTTPResource resource client
-class TestHTTPResource {
+// TestHTTPResourceClient is the TestHTTPResourceClient resource client
+class TestHTTPResourceClient {
     client;
     constructor(client) {
         this.client = client;
     }
+    /** operation Get
+*/
     async Get(inputProps) {
         const res = await this.client.execute(_testHTTPGetOperationMeta, inputProps);
         return res;
     }
+    /** operation Other
+*/
     async Other(inputProps) {
         const res = await this.client.execute(_testHTTPOtherOperationMeta, inputProps);
         return res;
     }
+    /** operation WatchChanges
+*/
     async WatchChanges(inputProps, outputCallback) {
         await this.client.stream(_testHTTPWatchChangesOperationMeta, inputProps, async (output) => {
             await outputCallback(output);
@@ -204,6 +235,8 @@ export function createRuntimeClient(config) {
  */
 export class Client {
     client;
+    /** resource TestHTTP client
+*/
     TestHTTP;
     constructor(config) {
         if (config?.client) {
@@ -212,7 +245,6 @@ export class Client {
         else {
             this.client = createRuntimeClient(config);
         }
-        console.log("client initialized from allow");
-        this.TestHTTP = new TestHTTPResource(this.client);
+        this.TestHTTP = new TestHTTPResourceClient(this.client);
     }
 }

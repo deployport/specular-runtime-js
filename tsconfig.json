@@ -22,7 +22,8 @@
         "forceConsistentCasingInFileNames": true,
         "moduleResolution": "nodenext",
         "declaration": true,
-        "outDir": "lib"
+        "outDir": "lib",
+        "rootDir": "src"
     },
     "exclude": [
         "node_modules",
