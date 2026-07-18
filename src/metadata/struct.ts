@@ -132,6 +132,13 @@ async function serializeToJSON(typeRef: TypeRef, value: any): Promise<any> {
                 }
                 return value;
             }
+            if (typeRef.Builtin === 'bool') {
+                // Omit false, matching how 0/''/zero-time are omitted above.
+                if (value === false) {
+                    return undefined;
+                }
+                return value;
+            }
             if (typeRef.Builtin === "time") {
                 if (!(value instanceof Date)) {
                     throw new Error(`expected Date, got ${value}`);
@@ -209,6 +216,15 @@ function deserializeFromJSON(typeRef: TypeRef, value: any): any {
                 }
                 if (typeof value !== 'string') {
                     throw new Error(`expected string, got ${typeof value}`);
+                }
+                return value;
+            } else if (typeRef.Builtin === 'bool') {
+                // Omitted-on-the-wire means false (mirror of serialize).
+                if (value === undefined) {
+                    return typeRef.NonNullable ? false : null;
+                }
+                if (typeof value !== 'boolean') {
+                    throw new Error(`expected boolean, got ${typeof value}`);
                 }
                 return value;
             } else if (typeRef.Builtin == 'binary') {

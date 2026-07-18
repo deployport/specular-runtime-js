@@ -54,6 +54,12 @@ export interface BodyProperties {
     /** createdAtNullable property
 */
     createdAtNullable: Date | null;
+    /** enabledBool property
+*/
+    enabledBool: boolean;
+    /** enabledBoolNullable property
+*/
+    enabledBoolNullable: boolean | null;
     /** fileData property
 */
     fileData: Blob;

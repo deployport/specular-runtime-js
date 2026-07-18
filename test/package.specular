@@ -17,6 +17,8 @@ struct Body {
     contentLengthUint64Nullable: uint64!
     messageString: string!
     messageStringNullable: string
+    enabledBool: bool!
+    enabledBoolNullable: bool
     createdAt: time!
     createdAtNullable: time
     fileData: binary!

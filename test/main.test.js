@@ -36,6 +36,8 @@ test('Deserialize with builtins props', (t) => {
         t.equal(s.body.contentLengthUint64, 0);
         t.equal(s.body.messageString, "");
         t.equal(s.body.messageStringNullable, null);
+        t.equal(s.body.enabledBool, false, "default bool value when missing");
+        t.equal(s.body.enabledBoolNullable, null);
         t.deepEqual(s.body.createdAt, defaultZeroTime());
         t.deepEqual(s.body.createdAtNullable, null);
         t.notEqual(s.body.fileData, null);
@@ -53,6 +55,8 @@ test('Deserialize with builtins props', (t) => {
                 "contentLengthFloat64Nullable": 64,
                 "messageString": "msg",
                 "messageStringNullable": "msg nullable",
+                "enabledBool": true,
+                "enabledBoolNullable": true,
                 "createdAtNullable": "2024-06-18T02:02:07.602Z",
                 "fileData": "",
                 "bodyType": "special",
@@ -65,6 +69,8 @@ test('Deserialize with builtins props', (t) => {
         t.equal(s.body.contentLengthFloat64Nullable, 64);
         t.equal(s.body.messageString, "msg");
         t.equal(s.body.messageStringNullable, "msg nullable");
+        t.equal(s.body.enabledBool, true);
+        t.equal(s.body.enabledBoolNullable, true);
         t.same(s.body.createdAtNullable, new Date('2024-06-18T02:02:07.602Z'));
         t.same(s.body.fileData, new Blob([]));
         t.equal(s.body.bodyType, BodyType.Special);
@@ -172,6 +178,7 @@ test('Serialize with builtin props', (t) => {
             contentLengthInt32: 32,
             contentLengthUint64Nullable: 64,
             messageString: 'msg',
+            enabledBool: true,
         })
         const props = Object.keys(obj);
         t.true(props.includes('contentLengthInt32'))
@@ -179,6 +186,18 @@ test('Serialize with builtin props', (t) => {
         t.equal(obj.contentLengthInt32, 32);
         t.equal(obj.contentLengthUint64Nullable, 64);
         t.equal(obj.messageString, 'msg');
+        t.true(props.includes('enabledBool'))
+        t.equal(obj.enabledBool, true);
+        t.end()
+    });
+    t.test("bool false is omitted", async (t) => {
+        const obj = await BodyMeta.serialize({
+            enabledBool: false,
+            enabledBoolNullable: false,
+        })
+        const props = Object.keys(obj);
+        t.false(props.includes('enabledBool'), 'false should be omitted (zero value)')
+        t.false(props.includes('enabledBoolNullable'), 'nullable false should be omitted too')
         t.end()
     });
     t.test("nulls", async (t) => {

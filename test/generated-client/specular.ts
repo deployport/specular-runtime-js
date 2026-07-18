@@ -95,6 +95,16 @@ NonNullable: false,
 SubType: "builtin",
 Builtin: "time"
 });
+new Metadata.Property(BodyMeta, "enabledBool", {
+NonNullable: true,
+SubType: "builtin",
+Builtin: "bool"
+});
+new Metadata.Property(BodyMeta, "enabledBoolNullable", {
+NonNullable: false,
+SubType: "builtin",
+Builtin: "bool"
+});
 new Metadata.Property(BodyMeta, "fileData", {
 NonNullable: true,
 SubType: "builtin",
@@ -154,6 +164,12 @@ export interface BodyProperties {
     /** createdAtNullable property
 */
     createdAtNullable : Date| null
+    /** enabledBool property
+*/
+    enabledBool : boolean
+    /** enabledBoolNullable property
+*/
+    enabledBoolNullable : boolean| null
     /** fileData property
 */
     fileData : Blob

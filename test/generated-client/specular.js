@@ -80,6 +80,16 @@ new Metadata.Property(BodyMeta, "createdAtNullable", {
     SubType: "builtin",
     Builtin: "time"
 });
+new Metadata.Property(BodyMeta, "enabledBool", {
+    NonNullable: true,
+    SubType: "builtin",
+    Builtin: "bool"
+});
+new Metadata.Property(BodyMeta, "enabledBoolNullable", {
+    NonNullable: false,
+    SubType: "builtin",
+    Builtin: "bool"
+});
 new Metadata.Property(BodyMeta, "fileData", {
     NonNullable: true,
     SubType: "builtin",
