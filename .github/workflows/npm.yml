@@ -14,7 +14,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - run: npm install
       - run: npm run test
-      - run: npm version --from-git
+      - run: npm version from-git --no-git-tag-version --allow-same-version
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.SPECULAR_NPM_TOKEN }}
