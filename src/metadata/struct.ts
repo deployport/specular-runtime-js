@@ -111,6 +111,13 @@ export default class Struct implements UserDefinedType {
     }
 }
 
+/**
+ * Serializes a value for the wire, omitting anything equal to the property's default.
+ *
+ * Nullability decides that default: non-nullable defaults to the zero value, nullable to
+ * null. So only a non-nullable zero may be omitted; omitting a nullable one is lossy,
+ * because the absent key comes back as null. Keep symmetric with deserializeFromJSON.
+ */
 async function serializeToJSON(typeRef: TypeRef, value: any): Promise<any> {
     switch (typeRef.SubType) {
         case "builtin":
@@ -121,20 +128,20 @@ async function serializeToJSON(typeRef: TypeRef, value: any): Promise<any> {
                 return undefined;
             }
             if (isIntegral(typeRef.Builtin)) {
-                if (value === 0) {
+                if (value === 0 && typeRef.NonNullable) {
                     return undefined;
                 }
                 return value;
             }
             if (typeRef.Builtin === 'string') {
-                if (value === '') {
+                if (value === '' && typeRef.NonNullable) {
                     return undefined;
                 }
                 return value;
             }
             if (typeRef.Builtin === 'bool') {
                 // Omit false, matching how 0/''/zero-time are omitted above.
-                if (value === false) {
+                if (value === false && typeRef.NonNullable) {
                     return undefined;
                 }
                 return value;
@@ -144,7 +151,7 @@ async function serializeToJSON(typeRef: TypeRef, value: any): Promise<any> {
                     throw new Error(`expected Date, got ${value}`);
                 }
                 const dt = value;
-                if (dateIsZeroTime(dt)) {
+                if (dateIsZeroTime(dt) && typeRef.NonNullable) {
                     return undefined;
                 }
                 return value.toISOString();
@@ -152,7 +159,7 @@ async function serializeToJSON(typeRef: TypeRef, value: any): Promise<any> {
                 if (!(value instanceof Blob)) {
                     throw new Error(`expected Blob, got ${value}`);
                 }
-                if (value.size === 0) {
+                if (value.size === 0 && typeRef.NonNullable) {
                     return undefined;
                 }
                 return await BlobToBase64(value);
@@ -171,7 +178,7 @@ async function serializeToJSON(typeRef: TypeRef, value: any): Promise<any> {
                 if (value === undefined) {
                     return undefined;
                 }
-                if (value === typeRef.Type.defaultConstant) {
+                if (value === typeRef.Type.defaultConstant && typeRef.NonNullable) {
                     return undefined;
                 }
                 return value;
@@ -179,11 +186,16 @@ async function serializeToJSON(typeRef: TypeRef, value: any): Promise<any> {
                 throw new Error(`unexpected type ref user defined ${typeRef}`);
             }
         case "array":
-            if (!value) {
-                return null;
+            // A non-nullable list defaults to [], so an empty one is omitted. Returning null
+            // here put `"tags": null` on the wire for every empty list, which Go omits.
+            if (value === undefined || value === null) {
+                return undefined;
             }
             if (!Array.isArray(value)) {
                 throw new Error(`expected array, got ${value}`);
+            }
+            if (value.length === 0 && typeRef.NonNullable) {
+                return undefined;
             }
             return await Promise.all(value.map((v: any) => serializeToJSON(typeRef.Item, v)));
     }
@@ -252,8 +264,11 @@ function deserializeFromJSON(typeRef: TypeRef, value: any): any {
                 throw new Error(`unexpected type ref user defined ${typeRef}`);
             }
         case "array":
-            if (!value) {
-                return null;
+            // Restore the declared default, [] for a non-nullable list, as the branches above
+            // restore 0 and an enum's first constant. This was the only one ignoring
+            // NonNullable, so an empty list came back null and every `for...of` threw.
+            if (value === undefined || value === null) {
+                return typeRef.NonNullable ? [] : null;
             }
             if (!Array.isArray(value)) {
                 throw new Error(`expected array, got ${value}`);

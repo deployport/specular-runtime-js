@@ -66,7 +66,7 @@ new Metadata.Property(BodyMeta, "contentLengthUint64", {
     Builtin: "uint64"
 });
 new Metadata.Property(BodyMeta, "contentLengthUint64Nullable", {
-    NonNullable: true,
+    NonNullable: false,
     SubType: "builtin",
     Builtin: "uint64"
 });
@@ -109,6 +109,24 @@ new Metadata.Property(BodyMeta, "messageStringNullable", {
     NonNullable: false,
     SubType: "builtin",
     Builtin: "string"
+});
+new Metadata.Property(BodyMeta, "tags", {
+    NonNullable: true,
+    SubType: "array",
+    Item: {
+        NonNullable: true,
+        SubType: "builtin",
+        Builtin: "string"
+    }
+});
+new Metadata.Property(BodyMeta, "tagsNullable", {
+    NonNullable: false,
+    SubType: "array",
+    Item: {
+        NonNullable: true,
+        SubType: "builtin",
+        Builtin: "string"
+    }
 });
 /** Struct metadata
 */

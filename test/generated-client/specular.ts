@@ -81,7 +81,7 @@ SubType: "builtin",
 Builtin: "uint64"
 });
 new Metadata.Property(BodyMeta, "contentLengthUint64Nullable", {
-NonNullable: true,
+NonNullable: false,
 SubType: "builtin",
 Builtin: "uint64"
 });
@@ -125,6 +125,24 @@ NonNullable: false,
 SubType: "builtin",
 Builtin: "string"
 });
+new Metadata.Property(BodyMeta, "tags", {
+NonNullable: true,
+SubType: "array",
+Item: {
+NonNullable: true,
+SubType: "builtin",
+Builtin: "string"
+}
+});
+new Metadata.Property(BodyMeta, "tagsNullable", {
+NonNullable: false,
+SubType: "array",
+Item: {
+NonNullable: true,
+SubType: "builtin",
+Builtin: "string"
+}
+});
 /** struct Body
 */
 export interface BodyProperties {
@@ -157,7 +175,7 @@ export interface BodyProperties {
     contentLengthUint64 : number
     /** contentLengthUint64Nullable property
 */
-    contentLengthUint64Nullable : number
+    contentLengthUint64Nullable : number| null
     /** createdAt property
 */
     createdAt : Date
@@ -182,6 +200,12 @@ export interface BodyProperties {
     /** messageStringNullable property
 */
     messageStringNullable : string| null
+    /** tags property
+*/
+    tags : (string)[]
+    /** tagsNullable property
+*/
+    tagsNullable : (string)[]
 }
 /** struct Body
 */

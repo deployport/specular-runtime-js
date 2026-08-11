@@ -47,7 +47,7 @@ export interface BodyProperties {
     contentLengthUint64: number;
     /** contentLengthUint64Nullable property
 */
-    contentLengthUint64Nullable: number;
+    contentLengthUint64Nullable: number | null;
     /** createdAt property
 */
     createdAt: Date;
@@ -72,6 +72,12 @@ export interface BodyProperties {
     /** messageStringNullable property
 */
     messageStringNullable: string | null;
+    /** tags property
+*/
+    tags: (string)[];
+    /** tagsNullable property
+*/
+    tagsNullable: (string)[];
 }
 /** struct Body
 */

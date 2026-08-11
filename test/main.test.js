@@ -46,6 +46,8 @@ test('Deserialize with builtins props', (t) => {
         t.equal(s.body.fileDataNullable, null);
         t.equal(s.body.bodyType, BodyType.Normal, "default enum value when missing");
         t.equal(s.body.bodyTypeNullable, null);
+        t.deepEqual(s.body.tags, [], "default list value when missing");
+        t.equal(s.body.tagsNullable, null);
         t.end();
     });
     t.test("value", (t) => {
@@ -127,6 +129,26 @@ function areArrayBuffersEqual(buffer1, buffer2) {
     return true;
 }
 
+// An absent `[T!]!` used to come back null, so every `for...of` threw. It took down a page in
+// the console on 2026-08-10. The generated type says non-optional array, so no typecheck can
+// see it; only real data can.
+test('An absent non-nullable list is restored to an empty array, not null', (t) => {
+    const s = _pkg.requireBuildFromJSON(ResponseMeta.path, { "body": {} });
+    t.deepEqual(s.body.tags, [], "[T!]! absent must be []");
+    t.doesNotThrow(() => { for (const _ of s.body.tags) { /* the crash */ } },
+        "an absent non-nullable list must be iterable");
+    t.equal(s.body.tagsNullable, null, "[T!] absent stays null, because absence means something there");
+    t.deepEqual(
+        _pkg.requireBuildFromJSON(ResponseMeta.path, { "body": { "tags": ["a", "b"] } }).body.tags,
+        ["a", "b"],
+        "a populated list is untouched");
+    t.deepEqual(
+        _pkg.requireBuildFromJSON(ResponseMeta.path, { "body": { "tags": [] } }).body.tags,
+        [],
+        "an explicitly empty list is untouched");
+    t.end();
+});
+
 test('Deserialize with struct props', (t) => {
     t.test("null field", (t) => {
         const obj = {
@@ -173,6 +195,18 @@ test('Serialize with builtin props', (t) => {
         t.deepEqual(Object.keys(obj), [])
         t.end()
     });
+    // Must be its own case: "missing" above leaves the property undefined, so an earlier guard
+    // absorbs it and the length check never runs. Without this, the omission is untested.
+    t.test("explicitly empty non-nullable list is omitted", async (t) => {
+        const obj = await BodyMeta.serialize({ tags: [] })
+        t.deepEqual(Object.keys(obj), [], "an empty [T!]! is the zero value, so it is waste on the wire")
+        t.end()
+    });
+    t.test("explicitly empty NULLABLE list is kept", async (t) => {
+        const obj = await BodyMeta.serialize({ tagsNullable: [] })
+        t.deepEqual(obj.tagsNullable, [], "for [T!] an empty list is distinguishable from absent, so it survives")
+        t.end()
+    });
     t.test("custom value", async (t) => {
         const obj = await BodyMeta.serialize({
             contentLengthInt32: 32,
@@ -197,7 +231,8 @@ test('Serialize with builtin props', (t) => {
         })
         const props = Object.keys(obj);
         t.false(props.includes('enabledBool'), 'false should be omitted (zero value)')
-        t.false(props.includes('enabledBoolNullable'), 'nullable false should be omitted too')
+        t.true(props.includes('enabledBoolNullable'), 'nullable false must be sent, null is its default')
+        t.equal(obj.enabledBoolNullable, false)
         t.end()
     });
     t.test("nulls", async (t) => {
@@ -272,6 +307,119 @@ test('Serialize with builtin props', (t) => {
         t.false(props.includes('bodyType'), 'should not include since default value was set')
         t.deepEqual(props, []);
         t.end()
+    });
+});
+
+// A property's default value follows the Specular spec:
+//   non-nullable scalar -> default is the zero value, so omitting zero is lossless
+//   nullable scalar     -> default is null, so omitting zero is LOSSY and zero must be sent
+// Every assertion below is a round trip: serialize, then deserialize the same payload back.
+test('Zero values are omitted only when the default is the zero value', (t) => {
+    const roundTrip = async (props) => {
+        const wire = await BodyMeta.serialize(props);
+        // JSON.parse(JSON.stringify()) so we assert on what actually crosses the wire.
+        return {
+            wire,
+            back: _pkg.requireBuildFromJSON(BodyMeta.path, JSON.parse(JSON.stringify(wire))),
+        };
+    };
+
+    t.test("non-nullable zero is omitted and restored as the zero value", async (t) => {
+        const { wire, back } = await roundTrip({
+            contentLengthInt32: 0,
+            contentLengthInt64: 0,
+            contentLengthFloat64: 0,
+            contentLengthUint32: 0,
+            contentLengthUint64: 0,
+            messageString: '',
+            enabledBool: false,
+            createdAt: defaultZeroTime(),
+        });
+        t.deepEqual(Object.keys(wire), [], 'non-nullable zeros carry no information, omit them all');
+        t.equal(back.contentLengthInt32, 0);
+        t.equal(back.contentLengthInt64, 0);
+        t.equal(back.contentLengthFloat64, 0);
+        t.equal(back.contentLengthUint32, 0);
+        t.equal(back.contentLengthUint64, 0);
+        t.equal(back.messageString, '');
+        t.equal(back.enabledBool, false);
+        t.deepEqual(back.createdAt, defaultZeroTime());
+        t.end();
+    });
+
+    t.test("nullable zero is sent explicitly and read back as zero", async (t) => {
+        const { wire, back } = await roundTrip({
+            contentLengthUint64Nullable: 0,
+            contentLengthFloat64Nullable: 0,
+            messageStringNullable: '',
+            enabledBoolNullable: false,
+            createdAtNullable: defaultZeroTime(),
+        });
+        t.true(Object.hasOwn(wire, 'contentLengthUint64Nullable'), 'nullable int at zero must be on the wire');
+        t.equal(wire.contentLengthUint64Nullable, 0);
+        t.true(Object.hasOwn(wire, 'contentLengthFloat64Nullable'), 'nullable float at zero must be on the wire');
+        t.equal(wire.contentLengthFloat64Nullable, 0);
+        t.true(Object.hasOwn(wire, 'messageStringNullable'), 'nullable empty string must be on the wire');
+        t.equal(wire.messageStringNullable, '');
+        t.true(Object.hasOwn(wire, 'enabledBoolNullable'), 'nullable false must be on the wire');
+        t.equal(wire.enabledBoolNullable, false);
+        t.true(Object.hasOwn(wire, 'createdAtNullable'), 'nullable zero time must be on the wire');
+
+        t.equal(back.contentLengthUint64Nullable, 0, 'nullable int survives the round trip as 0, not null');
+        t.equal(back.contentLengthFloat64Nullable, 0);
+        t.equal(back.messageStringNullable, '');
+        t.equal(back.enabledBoolNullable, false);
+        t.deepEqual(back.createdAtNullable, defaultZeroTime());
+        t.end();
+    });
+
+    t.test("nullable null is omitted and restored as null", async (t) => {
+        const { wire, back } = await roundTrip({
+            contentLengthUint64Nullable: null,
+            contentLengthFloat64Nullable: null,
+            messageStringNullable: null,
+            enabledBoolNullable: null,
+            createdAtNullable: null,
+            fileDataNullable: null,
+            bodyTypeNullable: null,
+        });
+        t.deepEqual(Object.keys(wire), [], 'null is the default of a nullable field, so omit it');
+        t.equal(back.contentLengthUint64Nullable, null);
+        t.equal(back.contentLengthFloat64Nullable, null);
+        t.equal(back.messageStringNullable, null);
+        t.equal(back.enabledBoolNullable, null);
+        t.equal(back.createdAtNullable, null);
+        t.equal(back.fileDataNullable, null);
+        t.equal(back.bodyTypeNullable, null);
+        t.end();
+    });
+
+    t.test("nullable enum at its default constant is sent explicitly", async (t) => {
+        const wire = await BodyMeta.serialize({
+            bodyType: BodyType.Normal,
+            bodyTypeNullable: BodyType.Normal,
+        });
+        t.false(Object.hasOwn(wire, 'bodyType'), 'non-nullable enum defaults to the first constant, omit it');
+        t.true(Object.hasOwn(wire, 'bodyTypeNullable'), 'nullable enum defaults to null, so the constant must be sent');
+        t.equal(wire.bodyTypeNullable, BodyType.Normal);
+        const back = _pkg.requireBuildFromJSON(BodyMeta.path, JSON.parse(JSON.stringify(wire)));
+        t.equal(back.bodyType, BodyType.Normal);
+        t.equal(back.bodyTypeNullable, BodyType.Normal, 'nullable enum survives as its constant, not null');
+        t.end();
+    });
+
+    t.test("nullable empty binary is sent explicitly", async (t) => {
+        const wire = await BodyMeta.serialize({
+            fileData: new Blob([]),
+            fileDataNullable: new Blob([]),
+        });
+        t.false(Object.hasOwn(wire, 'fileData'), 'non-nullable binary defaults to empty, omit it');
+        t.true(Object.hasOwn(wire, 'fileDataNullable'), 'nullable empty binary must be on the wire');
+        t.equal(wire.fileDataNullable, '');
+        const back = _pkg.requireBuildFromJSON(BodyMeta.path, JSON.parse(JSON.stringify(wire)));
+        t.notEqual(back.fileDataNullable, null, 'nullable empty binary survives as an empty Blob, not null');
+        t.equal(back.fileDataNullable.size, 0);
+        t.end();
     });
 });
 
