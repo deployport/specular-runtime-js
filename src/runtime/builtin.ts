@@ -61,6 +61,12 @@ export function ParseOptionalBinary(maybeStringBase64: any): Blob | null {
 }
 
 /**
+ * Bytes passed to one String.fromCharCode call. Spreading a whole buffer passes every byte as
+ * its own argument, and V8 overflows its stack at about 126,000 of them.
+ */
+const BINARY_ENCODE_CHUNK = 0x8000;
+
+/**
  * Converts a blob to base64 string
  * @param blob 
  * @returns 
@@ -69,7 +75,10 @@ export async function BlobToBase64(blob: Blob | null | undefined): Promise<strin
     if (!blob) {
         return null;
     }
-    const arrayBuffer = await blob.arrayBuffer();
-    const base64String = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-    return base64String;
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += BINARY_ENCODE_CHUNK) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + BINARY_ENCODE_CHUNK));
+    }
+    return btoa(binary);
 }

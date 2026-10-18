@@ -5,7 +5,7 @@ import {
 } from '../lib/index.js';
 import { StructPath } from '../lib/metadata/struct.js';
 import { defaultZeroTime } from '../lib/metadata/builtin.js';
-import { BlobToBase64 } from '../lib/runtime/builtin.js';
+import { BlobToBase64, ParseOptionalBinary } from '../lib/runtime/builtin.js';
 import { parseHTTPResult } from '../lib/runtime/client.js';
 import { RpcError, UnknownRpcError } from '../lib/runtime/error.js';
 import { TypeNotFoundError } from '../lib/metadata/package.js';
@@ -503,5 +503,55 @@ test('unknown type without kind=error stays a TypeNotFoundError', async (t) => {
         t.notOk(e instanceof UnknownRpcError, 'not UnknownRpcError');
         t.ok(e instanceof TypeNotFoundError, 'is TypeNotFoundError');
     }
+    t.end();
+});
+
+// BlobToBase64 used to spread every byte into one String.fromCharCode call, and V8 threw
+// RangeError past about 125,000 bytes. A 2 MiB console screenshot hit it. The sizes sit on
+// both sides of the 0x8000 chunk and past the old limit. Node's Buffer is the independent base64.
+const BINARY_SIZES = [0, 1, 2, 3, 0x8000 - 1, 0x8000, 0x8000 + 1, 200000, 2 * 1024 * 1024];
+
+function patternedBytes(n) {
+    const bytes = new Uint8Array(n);
+    let x = 0x9e3779b9;
+    for (let i = 0; i < n; i++) {
+        x = (Math.imul(x, 1103515245) + 12345) >>> 0;
+        bytes[i] = x >>> 24;
+    }
+    return bytes;
+}
+
+test('BlobToBase64 round trips binary of every size through ParseOptionalBinary', (t) => {
+    for (const n of BINARY_SIZES) {
+        t.test(`${n} bytes`, async (t) => {
+            const bytes = patternedBytes(n);
+            let encoded;
+            try {
+                encoded = await BlobToBase64(new Blob([bytes]));
+            } catch (e) {
+                t.fail(`BlobToBase64 threw ${e}`);
+                t.end();
+                return;
+            }
+            t.equal(encoded, Buffer.from(bytes).toString('base64'), 'matches Buffer base64');
+            const decoded = new Uint8Array(await ParseOptionalBinary(encoded).arrayBuffer());
+            t.equal(decoded.length, n, 'decoded length');
+            t.true(Buffer.from(decoded).equals(Buffer.from(bytes)), 'decoded bytes equal the input');
+            t.end();
+        });
+    }
+});
+
+test('BlobToBase64 answers null for null and undefined', async (t) => {
+    t.equal(await BlobToBase64(null), null);
+    t.equal(await BlobToBase64(undefined), null);
+    t.end();
+});
+
+// The real caller: a struct's binary field, which is how the console sends a screenshot.
+test('A 2 MiB binary field serializes through its struct', async (t) => {
+    const bytes = patternedBytes(2 * 1024 * 1024);
+    const obj = await BodyMeta.serialize({ fileData: new Blob([bytes]) });
+    t.equal(obj.fileData, Buffer.from(bytes).toString('base64'));
     t.end();
 });
