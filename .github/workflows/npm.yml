@@ -5,6 +5,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # npm trusted publishing: npm reads GitHub's OIDC token, so no npm token is stored
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v7
       # Setup .npmrc file to publish to npm
@@ -16,5 +20,3 @@ jobs:
       - run: npm run test
       - run: npm version from-git --no-git-tag-version --allow-same-version
       - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.SPECULAR_NPM_TOKEN }}
