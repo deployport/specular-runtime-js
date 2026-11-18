@@ -149,6 +149,61 @@ test('An absent non-nullable list is restored to an empty array, not null', (t) 
     t.end();
 });
 
+// ⛔ A LIST ELEMENT IS NEVER OMITTED, AND THIS IS THE TEST THAT SAYS SO. Omitting a default is a
+// PROPERTY's rule: absent comes back as the zero value, so the two are the same fact. A list
+// position has no absent form, so the omission used to leave a `null` where a value belonged.
+//
+// Measured before this fix, in a client that asked for five readings in one list and drew each of
+// them: the request carried `[null, ...]` instead, so the reading equal to the enum's first constant
+// was never asked for and the client showed its no-value marker in that place.
+test('A list element is written even when it equals its type zero value', (t) => {
+    // The generated test client cannot carry an enum list today: `test-gen` fails on this
+    // package's own `createdAt: time!`, so the metadata is built here against the generated
+    // enum. It is the same shape the generator emits for `[T!]!`: a non-nullable item.
+    const kinds = _pkg.requireTypeByName("BodyType");
+    const holder = new Metadata.Struct(_pkg, "EnumListHolder");
+    new Metadata.Property(holder, "kinds", {
+        NonNullable: true,
+        SubType: "array",
+        Item: { NonNullable: true, SubType: "userDefined", Type: kinds },
+    });
+
+    t.test("an enum list keeps its first constant", async (t) => {
+        const wire = await holder.serialize({ kinds: ['normal', 'special'] });
+        t.deepEqual(
+            JSON.parse(JSON.stringify(wire)).kinds,
+            ['normal', 'special'],
+            "an element equal to the enum's first constant keeps its place, which is what the bug this guards used to drop");
+        t.deepEqual(
+            _pkg.requireBuildFromJSON(holder.path, JSON.parse(JSON.stringify(wire))).kinds,
+            ['normal', 'special'],
+            "and it survives the round trip");
+        t.end();
+    });
+
+    t.test("a string list keeps an empty element", async (t) => {
+        const wire = await BodyMeta.serialize({ tags: ['', 'x'] });
+        t.deepEqual(
+            JSON.parse(JSON.stringify(wire)).tags,
+            ['', 'x'],
+            "an empty string in a list is a value, so it keeps its place and the list its length");
+        t.deepEqual(
+            _pkg.requireBuildFromJSON(BodyMeta.path, JSON.parse(JSON.stringify(wire))).tags,
+            ['', 'x']);
+        t.end();
+    });
+
+    // ⛔ THE PAIRED CONTROL, AND IT IS NOT DECORATION. A fix that stopped omitting everywhere
+    // would pass both cases above and break the rule every other property depends on.
+    t.test("a property still omits its default", async (t) => {
+        t.deepEqual(Object.keys(await BodyMeta.serialize({ bodyType: BodyType.Normal })), [],
+            "a non-nullable enum property at its default is still absent from the wire");
+        t.deepEqual(Object.keys(await BodyMeta.serialize({ messageString: '' })), [],
+            "and so is an empty non-nullable string");
+        t.end();
+    });
+});
+
 test('Deserialize with struct props', (t) => {
     t.test("null field", (t) => {
         const obj = {
