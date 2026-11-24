@@ -149,17 +149,10 @@ test('An absent non-nullable list is restored to an empty array, not null', (t) 
     t.end();
 });
 
-// ⛔ A LIST ELEMENT IS NEVER OMITTED, AND THIS IS THE TEST THAT SAYS SO. Omitting a default is a
-// PROPERTY's rule: absent comes back as the zero value, so the two are the same fact. A list
-// position has no absent form, so the omission used to leave a `null` where a value belonged.
-//
-// Measured before this fix, in a client that asked for five readings in one list and drew each of
-// them: the request carried `[null, ...]` instead, so the reading equal to the enum's first constant
-// was never asked for and the client showed its no-value marker in that place.
+// A default is omitted only for a property, where absent restores the same default. A list
+// position has no absent form, so the element used to go out as null.
 test('A list element is written even when it equals its type zero value', (t) => {
-    // The generated test client cannot carry an enum list today: `test-gen` fails on this
-    // package's own `createdAt: time!`, so the metadata is built here against the generated
-    // enum. It is the same shape the generator emits for `[T!]!`: a non-nullable item.
+    // `test-gen` fails on this package's `createdAt: time!`, so the enum list is built here.
     const kinds = _pkg.requireTypeByName("BodyType");
     const holder = new Metadata.Struct(_pkg, "EnumListHolder");
     new Metadata.Property(holder, "kinds", {
@@ -193,8 +186,29 @@ test('A list element is written even when it equals its type zero value', (t) =>
         t.end();
     });
 
-    // ⛔ THE PAIRED CONTROL, AND IT IS NOT DECORATION. A fix that stopped omitting everywhere
-    // would pass both cases above and break the rule every other property depends on.
+    t.test("int, bool, time and binary lists keep their zero elements", async (t) => {
+        const scalars = new Metadata.Struct(_pkg, "ScalarListHolder");
+        for (const [name, builtin] of [["ints", "int32"], ["flags", "bool"], ["times", "time"], ["blobs", "binary"]]) {
+            new Metadata.Property(scalars, name, {
+                NonNullable: true,
+                SubType: "array",
+                Item: { NonNullable: true, SubType: "builtin", Builtin: builtin },
+            });
+        }
+        const wire = JSON.parse(JSON.stringify(await scalars.serialize({
+            ints: [0, 7],
+            flags: [false, true],
+            times: [defaultZeroTime(), new Date("2026-01-02T03:04:05Z")],
+            blobs: [new Blob([]), new Blob(["a"])],
+        })));
+        t.deepEqual(wire.ints, [0, 7], "an int list keeps 0");
+        t.deepEqual(wire.flags, [false, true], "a bool list keeps false");
+        t.deepEqual(wire.times, [defaultZeroTime().toISOString(), "2026-01-02T03:04:05.000Z"], "a time list keeps the zero time");
+        t.deepEqual(wire.blobs, ["", await BlobToBase64(new Blob(["a"]))], "a binary list keeps the empty value");
+        t.end();
+    });
+
+    // The control: a property still omits its default, so a wider fix fails here.
     t.test("a property still omits its default", async (t) => {
         t.deepEqual(Object.keys(await BodyMeta.serialize({ bodyType: BodyType.Normal })), [],
             "a non-nullable enum property at its default is still absent from the wire");

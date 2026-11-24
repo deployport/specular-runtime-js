@@ -118,14 +118,8 @@ export default class Struct implements UserDefinedType {
  * null. So only a non-nullable zero may be omitted; omitting a nullable one is lossy,
  * because the absent key comes back as null. Keep symmetric with deserializeFromJSON.
  *
- * ⛔ OMITTING A DEFAULT IS A PROPERTY'S RULE, NEVER A LIST ELEMENT'S. A list position has no
- * absent form: an omitted element leaves a null in its place, so it is not absent at all, it
- * is a value the receiver never sent. The array branch below passes `inList`, and then a zero
- * is written as a zero.
- *
- * Measured before this fix: `[BodyType.Normal, BodyType.Special]` went out as
- * `[null, "special"]`. So an operation that asks for a list of readings never received the one
- * that happens to be the enum's first constant, and the caller drew its no-value marker for it.
+ * A list element is never omitted. A list position has no absent form, so the array branch
+ * passes `inList` and an element equal to the default is written as it is.
  */
 async function serializeToJSON(typeRef: TypeRef, value: any, inList = false): Promise<any> {
     switch (typeRef.SubType) {
@@ -206,9 +200,7 @@ async function serializeToJSON(typeRef: TypeRef, value: any, inList = false): Pr
             if (value.length === 0 && typeRef.NonNullable) {
                 return undefined;
             }
-            // `inList` is true for every element: an element equal to its type's zero is a
-            // value the sender chose, and the list keeps its length and its order (see the
-            // doc comment on this function).
+            // A position cannot be absent, so an element keeps its value even at the default.
             return await Promise.all(value.map((v: any) => serializeToJSON(typeRef.Item, v, true)));
     }
 }
